@@ -1,0 +1,242 @@
+---
+import TranslatorForm from "../components/TranslatorForm.astro";
+import TranslationResult from "../components/TranslationResult.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="VinaNihon" description="ベトナム語↔日本語を自然に翻訳するシンプルなツール">
+  <main class="app-shell">
+    <TranslatorForm />
+    <TranslationResult />
+  </main>
+
+  <script is:inline>
+    const form = document.getElementById("translator-form");
+    const sourceLang = document.getElementById("sourceLang");
+    const targetLang = document.getElementById("targetLang");
+    const swapButton = document.getElementById("swapLanguages");
+    const sourceText = document.getElementById("sourceText");
+    const mode = document.getElementById("mode");
+    const tone = document.getElementById("tone");
+    const submitButton = document.getElementById("translateSubmit");
+    const formStatus = document.getElementById("formStatus");
+    const formError = document.getElementById("formError");
+
+    const resultCard = document.getElementById("translationResult");
+    const mainTranslation = document.getElementById("mainTranslation");
+    const alternativesList = document.getElementById("alternativesList");
+    const nuanceNotesList = document.getElementById("nuanceNotesList");
+    const suggestedRepliesList = document.getElementById("suggestedRepliesList");
+    const copyTimers = new WeakMap();
+
+    function setLoading(isLoading) {
+      submitButton.disabled = isLoading;
+      submitButton.textContent = isLoading ? "翻訳中..." : "翻訳する";
+      formStatus.textContent = isLoading ? "翻訳しています。しばらくお待ちください。" : "";
+    }
+
+    function setError(message) {
+      if (!message) {
+        formError.hidden = true;
+        formError.textContent = "";
+        return;
+      }
+
+      formError.hidden = false;
+      formError.textContent = message;
+    }
+
+    function renderList(listElement, values) {
+      listElement.innerHTML = "";
+
+      if (!Array.isArray(values) || values.length === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.textContent = "なし";
+        listElement.appendChild(emptyItem);
+        return;
+      }
+
+      for (const value of values) {
+        const item = document.createElement("li");
+        item.textContent = String(value);
+        listElement.appendChild(item);
+      }
+    }
+
+    function listToText(listElement) {
+      const items = Array.from(listElement.querySelectorAll("li"));
+      return items
+        .map((item) => item.textContent?.trim() || "")
+        .filter((value) => value.length > 0 && value !== "なし")
+        .join("\n");
+    }
+
+    function getCopyText(kind) {
+      if (kind === "main") {
+        return (mainTranslation.textContent || "").trim();
+      }
+
+      if (kind === "alternatives") {
+        return listToText(alternativesList);
+      }
+
+      if (kind === "nuance") {
+        return listToText(nuanceNotesList);
+      }
+
+      if (kind === "replies") {
+        return listToText(suggestedRepliesList);
+      }
+
+      return "";
+    }
+
+    async function writeClipboard(text) {
+      if (!navigator.clipboard || !window.isSecureContext) {
+        throw new Error("clipboard_unavailable");
+      }
+
+      await navigator.clipboard.writeText(text);
+    }
+
+    function flashCopiedState(button) {
+      const previousTimer = copyTimers.get(button);
+      if (previousTimer) {
+        clearTimeout(previousTimer);
+      }
+
+      button.textContent = "コピー済み";
+      button.classList.add("is-copied");
+
+      const nextTimer = setTimeout(() => {
+        button.textContent = "コピー";
+        button.classList.remove("is-copied");
+        copyTimers.delete(button);
+      }, 1200);
+
+      copyTimers.set(button, nextTimer);
+    }
+
+    async function parseResponse(response) {
+      let payload = null;
+
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok) {
+        const apiMessage =
+          payload &&
+          typeof payload === "object" &&
+          payload.error &&
+          typeof payload.error === "object" &&
+          typeof payload.error.message === "string"
+            ? payload.error.message
+            : `Request failed (${response.status})`;
+
+        throw new Error(apiMessage);
+      }
+
+      return payload;
+    }
+
+    function showResult(translateData, replyData) {
+      mainTranslation.textContent = translateData.mainTranslation || "";
+      renderList(alternativesList, translateData.alternatives);
+      renderList(nuanceNotesList, translateData.nuanceNotes);
+      renderList(suggestedRepliesList, replyData.suggestedReplies);
+
+      resultCard.classList.remove("is-hidden");
+    }
+
+    swapButton.addEventListener("click", () => {
+      const currentSource = sourceLang.value;
+      sourceLang.value = targetLang.value;
+      targetLang.value = currentSource;
+    });
+
+    resultCard.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      const button = target.closest(".copy-button");
+      if (!(button instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const copyKind = button.dataset.copyKind || "";
+      const copyText = getCopyText(copyKind);
+      if (!copyText) {
+        setError("コピーする内容がありません。");
+        return;
+      }
+
+      try {
+        await writeClipboard(copyText);
+        setError("");
+        flashCopiedState(button);
+      } catch {
+        setError("コピーに失敗しました。");
+      }
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setError("");
+
+      const text = sourceText.value.trim();
+      if (!text) {
+        setError("翻訳したい文を入力してください。");
+        return;
+      }
+
+      const translatePayload = {
+        sourceLang: sourceLang.value,
+        targetLang: targetLang.value,
+        text,
+        mode: mode.value,
+        tone: tone.value
+      };
+
+      setLoading(true);
+      resultCard.classList.add("is-hidden");
+
+      try {
+        const translateResponse = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(translatePayload)
+        });
+
+        const translateData = await parseResponse(translateResponse);
+
+        const replyPayload = {
+          sourceLang: translatePayload.sourceLang,
+          targetLang: translatePayload.targetLang,
+          originalText: text,
+          mainTranslation: translateData.mainTranslation,
+          mode: translatePayload.mode,
+          tone: translatePayload.tone
+        };
+
+        const replyResponse = await fetch("/api/reply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(replyPayload)
+        });
+
+        const replyData = await parseResponse(replyResponse);
+        showResult(translateData, replyData);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "翻訳処理に失敗しました。";
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</BaseLayout>

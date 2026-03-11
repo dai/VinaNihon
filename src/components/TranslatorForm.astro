@@ -1,0 +1,65 @@
+<form id="translator-form" class="card translator-form" novalidate>
+  <header class="hero">
+    <h1 class="app-title">VinaNihon</h1>
+    <p class="subtitle">ベトナム語↔日本語を、自然に翻訳</p>
+    <p class="description">直訳だけでなく、場面に合う言い換えや返信例も出します。</p>
+  </header>
+
+  <div class="field-row language-row">
+    <label class="field">
+      <span>入力言語</span>
+      <select id="sourceLang" name="sourceLang">
+        <option value="ja" selected>日本語</option>
+        <option value="vi">ベトナム語</option>
+      </select>
+    </label>
+
+    <button type="button" class="swap-button" id="swapLanguages" aria-label="入力言語と翻訳先言語を入れ替える">
+      ⇄
+    </button>
+
+    <label class="field">
+      <span>翻訳先言語</span>
+      <select id="targetLang" name="targetLang">
+        <option value="ja">日本語</option>
+        <option value="vi" selected>ベトナム語</option>
+      </select>
+    </label>
+  </div>
+
+  <label class="field">
+    <span>翻訳したい文</span>
+    <textarea
+      id="sourceText"
+      name="text"
+      rows="6"
+      placeholder="ここに文章を入力してください"
+      required
+    ></textarea>
+  </label>
+
+  <div class="field-row">
+    <label class="field">
+      <span>モード</span>
+      <select id="mode" name="mode">
+        <option value="daily" selected>daily</option>
+        <option value="work">work</option>
+        <option value="customer-service">customer-service</option>
+        <option value="hospital">hospital</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>トーン</span>
+      <select id="tone" name="tone">
+        <option value="casual">casual</option>
+        <option value="normal" selected>normal</option>
+        <option value="polite">polite</option>
+      </select>
+    </label>
+  </div>
+
+  <button type="submit" class="submit-button" id="translateSubmit">翻訳する</button>
+  <p id="formStatus" class="form-status" aria-live="polite"></p>
+  <p id="formError" class="form-error" role="alert" hidden></p>
+</form>
