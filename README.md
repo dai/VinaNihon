@@ -41,6 +41,20 @@ npm run dev
 
 5. Open: `http://localhost:4321`
 
+## Quick Start (OpenAI provider)
+
+`.env` を以下のように設定すると、実際の OpenAI 翻訳を使えます。
+
+```dotenv
+TRANSLATION_PROVIDER=openai
+OPENAI_API_KEY=your_api_key
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+その後 `npm run dev` を起動し、トップページから翻訳を実行してください。
+
+`TRANSLATION_PROVIDER` を `mock` に戻すと、即座にモック動作へ切り替わります。
+
 ## Environment Variables
 
 For Astro local development, use `.env`.
@@ -116,6 +130,44 @@ Response:
 - `openai` provider: calls `POST https://api.openai.com/v1/responses`
 
 API route contracts are unchanged. `/api/translate` and `/api/reply` stay thin and delegate to the service layer.
+
+## API Smoke Test (local)
+
+開発サーバー起動後に、以下で API の疎通確認ができます。
+
+```bash
+curl -s -X POST http://localhost:4321/api/translate \
+  -H "content-type: application/json" \
+  -d '{
+    "sourceLang":"ja",
+    "targetLang":"vi",
+    "text":"こんにちは",
+    "mode":"daily",
+    "tone":"normal"
+  }'
+```
+
+```bash
+curl -s -X POST http://localhost:4321/api/reply \
+  -H "content-type: application/json" \
+  -d '{
+    "sourceLang":"ja",
+    "targetLang":"vi",
+    "originalText":"こんにちは",
+    "mainTranslation":"Xin chào",
+    "mode":"daily",
+    "tone":"normal"
+  }'
+```
+
+## Troubleshooting
+
+- `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
+  - `.env` に `OPENAI_API_KEY` が設定されているか確認してください。
+- OpenAI 側エラーで `json_object` 関連メッセージが出る
+  - 実装側で `json` 指示を入力に含める対応済みです。古い dev サーバープロセスを停止して再起動してください。
+- `npm run check` で `@rollup/rollup-linux-x64-gnu` 欠落エラー
+  - npm の optional dependency 問題です。`npm i` を再実行してください。
 
 ## Scripts
 
