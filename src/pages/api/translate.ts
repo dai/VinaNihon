@@ -85,7 +85,8 @@ export const POST: APIRoute = async (context) => {
     return json(result, 200);
   } catch (cause) {
     console.error("/api/translate failed", cause);
-    return error("Translation failed. Please try again.", 500);
+    const message = cause instanceof Error ? cause.message : "Translation failed. Please try again.";
+    return error(message, 500);
   }
 };
 

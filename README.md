@@ -8,9 +8,9 @@
 - Astro + TypeScript
 - Cloudflare Pages (`@astrojs/cloudflare`)
 - Astro API routes (`/api/translate`, `/api/reply`)
-- Mock translation provider (real provider is pluggable later)
+- Provider abstraction (`mock` / `openai`)
 
-## Local Setup
+## Local Setup (Astro dev)
 
 1. Install dependencies:
 
@@ -18,28 +18,40 @@
 npm install
 ```
 
-2. Create env file:
+2. Create local env file:
 
 ```bash
-cp .dev.vars.example .dev.vars
+cp .env.example .env
 ```
 
-3. Run dev server:
+3. (Optional) enable real provider in `.env`:
+
+```dotenv
+TRANSLATION_PROVIDER=openai
+OPENAI_API_KEY=your_api_key
+# Optional
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+4. Run:
 
 ```bash
 npm run dev
 ```
 
-4. Open:
-
-`http://localhost:4321`
+5. Open: `http://localhost:4321`
 
 ## Environment Variables
 
-`.dev.vars` (or Cloudflare Pages environment variables):
+For Astro local development, use `.env`.
 
 - `TRANSLATION_PROVIDER=mock` (default)
-- `OPENAI_API_KEY=` (reserved for future `openai` provider)
+- `OPENAI_API_KEY=` (required when `TRANSLATION_PROVIDER=openai`)
+- `OPENAI_MODEL=gpt-4.1-mini` (optional)
+
+For Cloudflare Pages runtime, set the same variables in Pages project settings.
+
+If you use Wrangler local runtime, `.dev.vars` is also supported.
 
 ## Routes
 
@@ -100,16 +112,10 @@ Response:
 
 `src/lib/translate.ts` provides a service abstraction:
 
-- `mock` provider: implemented and used by default
-- `openai` provider: placeholder only (throws not-implemented error)
+- `mock` provider: always available fallback
+- `openai` provider: calls `POST https://api.openai.com/v1/responses`
 
-This keeps API handlers stable while allowing a real provider to be added later.
-
-## Cloudflare Pages
-
-- Build command: `npm run build`
-- Output directory: `dist`
-- Runtime config is in `wrangler.jsonc`
+API route contracts are unchanged. `/api/translate` and `/api/reply` stay thin and delegate to the service layer.
 
 ## Scripts
 

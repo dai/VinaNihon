@@ -1,12 +1,5 @@
 import { buildReplyPrompt, buildTranslatePrompt } from "./prompt";
-import type {
-  Mode,
-  ReplyRequest,
-  ReplyResponse,
-  Tone,
-  TranslateRequest,
-  TranslateResponse
-} from "./types";
+import type { ReplyRequest, ReplyResponse, TranslateRequest, TranslateResponse } from "./types";
 
 export type TranslationProviderName = "mock" | "openai";
 export type RuntimeEnv = Record<string, string | undefined> | undefined;
@@ -16,67 +9,276 @@ interface TranslationProvider {
   suggestReplies(input: ReplyRequest): Promise<ReplyResponse>;
 }
 
-function readEnv(name: string, runtimeEnv?: RuntimeEnv): string | undefined {
+const OPENAI_API_URL = "https://api.openai.com/v1/responses";
+const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
+
+class TranslationProviderError extends Error {
+  cause?: unknown;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = "TranslationProviderError";
+    this.cause = cause;
+  }
+}
+
+function readServerEnv(name: string, runtimeEnv?: RuntimeEnv): string | undefined {
   const runtimeValue = runtimeEnv?.[name];
   if (typeof runtimeValue === "string" && runtimeValue.length > 0) {
     return runtimeValue;
   }
 
-  const staticValue = (import.meta.env as Record<string, unknown>)[name];
-  if (typeof staticValue === "string" && staticValue.length > 0) {
-    return staticValue;
+  const astroValue = (import.meta.env as Record<string, unknown>)[name];
+  if (typeof astroValue === "string" && astroValue.length > 0) {
+    return astroValue;
   }
 
   return undefined;
 }
 
 function getProviderName(runtimeEnv?: RuntimeEnv): TranslationProviderName {
-  const raw = readEnv("TRANSLATION_PROVIDER", runtimeEnv)?.toLowerCase() ?? "mock";
+  const raw = readServerEnv("TRANSLATION_PROVIDER", runtimeEnv)?.toLowerCase() ?? "mock";
   return raw === "openai" ? "openai" : "mock";
 }
 
-function modeLabel(mode: Mode): string {
-  switch (mode) {
-    case "daily":
-      return "日常";
-    case "work":
-      return "仕事";
-    case "customer-service":
-      return "接客";
-    case "hospital":
-      return "病院";
-  }
+function getOpenAIModel(runtimeEnv?: RuntimeEnv): string {
+  return readServerEnv("OPENAI_MODEL", runtimeEnv) ?? DEFAULT_OPENAI_MODEL;
 }
 
-function toneLabel(tone: Tone): string {
-  switch (tone) {
-    case "casual":
-      return "カジュアル";
-    case "normal":
-      return "標準";
-    case "polite":
-      return "丁寧";
+function getOpenAIApiKey(runtimeEnv?: RuntimeEnv): string {
+  const apiKey = readServerEnv("OPENAI_API_KEY", runtimeEnv);
+  if (!apiKey) {
+    throw new TranslationProviderError(
+      "OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai."
+    );
   }
+
+  return apiKey;
 }
 
-function directionLabel(sourceLang: string, targetLang: string): string {
-  return `${sourceLang.toUpperCase()}→${targetLang.toUpperCase()}`;
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter((item) => item.length > 0);
 }
+
+function parseJsonObject(text: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+
+    if (start >= 0 && end > start) {
+      try {
+        const parsed = JSON.parse(text.slice(start, end + 1)) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+      } catch {
+        // no-op, fall through to error
+      }
+    }
+  }
+
+  throw new TranslationProviderError("OpenAI response was not valid JSON.");
+}
+
+function extractOpenAIOutputText(payload: unknown): string {
+  if (!payload || typeof payload !== "object") {
+    return "";
+  }
+
+  const directText = (payload as { output_text?: unknown }).output_text;
+  if (typeof directText === "string" && directText.trim().length > 0) {
+    return directText.trim();
+  }
+
+  const output = (payload as { output?: unknown }).output;
+  if (!Array.isArray(output)) {
+    return "";
+  }
+
+  const parts: string[] = [];
+
+  for (const item of output) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const content = (item as { content?: unknown }).content;
+    if (!Array.isArray(content)) {
+      continue;
+    }
+
+    for (const chunk of content) {
+      if (!chunk || typeof chunk !== "object") {
+        continue;
+      }
+
+      if ((chunk as { type?: unknown }).type !== "output_text") {
+        continue;
+      }
+
+      const text = (chunk as { text?: unknown }).text;
+      if (typeof text === "string" && text.trim().length > 0) {
+        parts.push(text.trim());
+      }
+    }
+  }
+
+  return parts.join("\n").trim();
+}
+
+function extractOpenAIErrorMessage(status: number, payload: unknown): string {
+  if (payload && typeof payload === "object") {
+    const error = (payload as { error?: unknown }).error;
+    if (error && typeof error === "object") {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim().length > 0) {
+        return message;
+      }
+    }
+  }
+
+  return `OpenAI API request failed with status ${status}.`;
+}
+
+async function callOpenAIJson(
+  runtimeEnv: RuntimeEnv,
+  instructions: string,
+  input: string,
+  schemaHint: string
+): Promise<Record<string, unknown>> {
+  const apiKey = getOpenAIApiKey(runtimeEnv);
+  const model = getOpenAIModel(runtimeEnv);
+
+  let response: Response;
+
+  try {
+    const inputWithJsonHint = `Return output as valid json.\n${input}`;
+
+    response = await fetch(OPENAI_API_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        instructions,
+        input: inputWithJsonHint,
+        text: {
+          format: {
+            type: "json_object"
+          }
+        }
+      })
+    });
+  } catch (cause) {
+    throw new TranslationProviderError("Failed to reach OpenAI API.", cause);
+  }
+
+  let payload: unknown = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    throw new TranslationProviderError(extractOpenAIErrorMessage(response.status, payload));
+  }
+
+  const outputText = extractOpenAIOutputText(payload);
+  if (!outputText) {
+    throw new TranslationProviderError("OpenAI returned an empty response.");
+  }
+
+  const parsed = parseJsonObject(outputText);
+
+  if (!parsed || typeof parsed !== "object") {
+    throw new TranslationProviderError(`OpenAI returned invalid ${schemaHint} JSON.`);
+  }
+
+  return parsed;
+}
+
+function normalizeTranslateResponse(
+  data: Record<string, unknown>,
+  input: TranslateRequest
+): TranslateResponse {
+  const mainTranslation =
+    typeof data.mainTranslation === "string" ? data.mainTranslation.trim() : "";
+
+  if (!mainTranslation) {
+    throw new TranslationProviderError("OpenAI response missing mainTranslation.");
+  }
+
+  return {
+    mainTranslation,
+    alternatives: toStringArray(data.alternatives),
+    nuanceNotes: toStringArray(data.nuanceNotes),
+    context: {
+      sourceLang: input.sourceLang,
+      targetLang: input.targetLang,
+      mode: input.mode,
+      tone: input.tone
+    }
+  };
+}
+
+function normalizeReplyResponse(data: Record<string, unknown>): ReplyResponse {
+  const suggestedReplies = toStringArray(data.suggestedReplies);
+
+  if (suggestedReplies.length === 0) {
+    throw new TranslationProviderError("OpenAI response missing suggestedReplies.");
+  }
+
+  return {
+    suggestedReplies
+  };
+}
+
+const TRANSLATE_INSTRUCTIONS = [
+  "You are a professional translator focused on Japanese and Vietnamese.",
+  "Always output valid JSON.",
+  "Return exactly this shape:",
+  '{"mainTranslation":"string","alternatives":["string"],"nuanceNotes":["string"]}',
+  "Rules:",
+  "- mainTranslation must be the best natural translation in target language.",
+  "- alternatives should be 2 to 4 useful variants in target language.",
+  "- nuanceNotes should be 1 to 3 short notes explaining tone/context choices."
+].join("\n");
+
+const REPLY_INSTRUCTIONS = [
+  "You generate suggested replies for Japanese-Vietnamese conversations.",
+  "Always output valid JSON.",
+  "Return exactly this shape:",
+  '{"suggestedReplies":["string"]}',
+  "Rules:",
+  "- suggestedReplies should contain 2 to 4 natural reply examples.",
+  "- Every reply must be in target language.",
+  "- Keep replies short and practical for chat usage."
+].join("\n");
 
 const mockProvider: TranslationProvider = {
   async translate(input) {
     const cleanedText = input.text.trim();
-    const direction = directionLabel(input.sourceLang, input.targetLang);
 
     return {
-      mainTranslation: `[${direction} / ${modeLabel(input.mode)} / ${toneLabel(input.tone)}] ${cleanedText}`,
-      alternatives: [
-        `別案1: ${cleanedText}`,
-        `別案2: ${cleanedText}`
-      ],
+      mainTranslation: `[MOCK ${input.sourceLang}->${input.targetLang}] ${cleanedText}`,
+      alternatives: [`別案1: ${cleanedText}`, `別案2: ${cleanedText}`],
       nuanceNotes: [
-        `${modeLabel(input.mode)}の場面で伝わりやすい表現を優先。`,
-        `${toneLabel(input.tone)}に合わせた語調に調整。`
+        `${input.mode}モードを想定した表現です。`,
+        `${input.tone}トーンを優先しています。`
       ],
       context: {
         sourceLang: input.sourceLang,
@@ -91,38 +293,44 @@ const mockProvider: TranslationProvider = {
     return {
       suggestedReplies: [
         `返信例1: ${input.mainTranslation}`,
-        `返信例2: ありがとうございます。内容を確認して連絡します。`,
-        `返信例3: 承知しました。よろしくお願いします。`
+        "返信例2: ありがとうございます。内容を確認します。",
+        "返信例3: 承知しました。よろしくお願いします。"
       ]
     };
   }
 };
 
-function createOpenAIPlaceholderProvider(apiKey?: string): TranslationProvider {
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai");
-  }
-
+function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
   return {
     async translate(input) {
       const prompt = buildTranslatePrompt(input);
-      throw new Error(`openai provider is not implemented yet. Prompt prepared: ${prompt}`);
+      const data = await callOpenAIJson(runtimeEnv, TRANSLATE_INSTRUCTIONS, prompt, "translate");
+      return normalizeTranslateResponse(data, input);
     },
+
     async suggestReplies(input) {
       const prompt = buildReplyPrompt(input);
-      throw new Error(`openai provider is not implemented yet. Prompt prepared: ${prompt}`);
+      const data = await callOpenAIJson(runtimeEnv, REPLY_INSTRUCTIONS, prompt, "reply");
+      return normalizeReplyResponse(data);
     }
   };
 }
 
 function createProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
   const providerName = getProviderName(runtimeEnv);
+  return providerName === "openai" ? createOpenAIProvider(runtimeEnv) : mockProvider;
+}
 
-  if (providerName === "openai") {
-    return createOpenAIPlaceholderProvider(readEnv("OPENAI_API_KEY", runtimeEnv));
+function toProviderError(cause: unknown): TranslationProviderError {
+  if (cause instanceof TranslationProviderError) {
+    return cause;
   }
 
-  return mockProvider;
+  if (cause instanceof Error) {
+    return new TranslationProviderError(cause.message, cause);
+  }
+
+  return new TranslationProviderError("Unexpected provider failure.", cause);
 }
 
 export async function translateText(
@@ -130,7 +338,12 @@ export async function translateText(
   runtimeEnv?: RuntimeEnv
 ): Promise<TranslateResponse> {
   const provider = createProvider(runtimeEnv);
-  return provider.translate(input);
+
+  try {
+    return await provider.translate(input);
+  } catch (cause) {
+    throw toProviderError(cause);
+  }
 }
 
 export async function suggestReplies(
@@ -138,5 +351,10 @@ export async function suggestReplies(
   runtimeEnv?: RuntimeEnv
 ): Promise<ReplyResponse> {
   const provider = createProvider(runtimeEnv);
-  return provider.suggestReplies(input);
+
+  try {
+    return await provider.suggestReplies(input);
+  } catch (cause) {
+    throw toProviderError(cause);
+  }
 }

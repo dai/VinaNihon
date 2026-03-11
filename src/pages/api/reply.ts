@@ -91,7 +91,8 @@ export const POST: APIRoute = async (context) => {
     return json(result, 200);
   } catch (cause) {
     console.error("/api/reply failed", cause);
-    return error("Reply generation failed. Please try again.", 500);
+    const message = cause instanceof Error ? cause.message : "Reply generation failed. Please try again.";
+    return error(message, 500);
   }
 };
 
