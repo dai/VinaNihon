@@ -98,28 +98,29 @@ This project is configured for Cloudflare Pages Functions.
 
 - `pages_build_output_dir: "./dist"`
 - `compatibility_flags: ["nodejs_compat"]`
-- `SESSION` KV binding placeholder for Astro sessions
+- `SESSION` KV binding for Astro sessions
+- `env.preview` uses the same `SESSION` KV namespace as production by default
 
-Before the first deployment, replace the placeholder KV IDs in `wrangler.jsonc`.
+If you need Preview and Production to be isolated, add a separate Preview KV namespace later.
 
-### 1. Create the `SESSION` KV namespaces
+### 1. Create the `SESSION` KV namespace
 
 ```bash
 npx wrangler kv namespace create SESSION
-npx wrangler kv namespace create SESSION --preview
 ```
 
-Copy the returned IDs into `wrangler.jsonc`:
+Copy the returned ID into `wrangler.jsonc`:
 
 ```jsonc
 "kv_namespaces": [
   {
     "binding": "SESSION",
-    "id": "your-production-kv-id",
-    "preview_id": "your-preview-kv-id"
+    "id": "your-session-kv-id"
   }
 ]
 ```
+
+If you later want a separate Preview KV, add another namespace and override it under `env.preview`.
 
 ### 2. Configure the Pages project
 

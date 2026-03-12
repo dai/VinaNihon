@@ -8,12 +8,21 @@
 	"pages_build_output_dir": "./dist",
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	// Astro's Cloudflare adapter expects a KV binding for sessions.
-	// Replace the preview placeholder ID before the first preview deployment.
+	// Preview uses the same KV namespace for now. Split it later if isolation is needed.
 	"kv_namespaces": [
 		{
 			"binding": "SESSION",
-			"id": "2a41b5eab68a40ce9e51c8c787b53f98",
-			"preview_id": "REPLACE_WITH_PREVIEW_SESSION_KV_ID"
+			"id": "2a41b5eab68a40ce9e51c8c787b53f98"
 		}
-	]
+	],
+	"env": {
+		"preview": {
+			"kv_namespaces": [
+				{
+					"binding": "SESSION",
+					"id": "2a41b5eab68a40ce9e51c8c787b53f98"
+				}
+			]
+		}
+	}
 }
