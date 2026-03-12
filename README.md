@@ -8,7 +8,7 @@
 - Astro + TypeScript
 - Cloudflare Pages (`@astrojs/cloudflare`)
 - Astro API routes (`/api/translate`, `/api/reply`)
-- Provider abstraction (`mock` / `openai` / `alibaba` / `minimax` / `aws-translate`)
+- Provider abstraction (`mock` / `openai`)
 
 ## Local Setup (Astro dev)
 
@@ -43,37 +43,6 @@ OPENAI_MODEL=MiniMax-M1
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
 
-Alibaba Cloud (DashScope compatible mode) を使う場合:
-
-```dotenv
-TRANSLATION_PROVIDER=alibaba
-DASHSCOPE_API_KEY=your_dashscope_api_key
-# Optional
-ALIBABA_MODEL=qwen3-max
-ALIBABA_BASE_URL=https://dashscope-intl.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1
-```
-
-MiniMax を使う場合:
-
-```dotenv
-TRANSLATION_PROVIDER=minimax
-MINIMAX_API_KEY=your_minimax_api_key
-# Optional
-MINIMAX_MODEL=MiniMax-M1
-MINIMAX_BASE_URL=https://api.minimax.io/v1
-```
-
-AWS Translate を使う場合:
-
-```dotenv
-TRANSLATION_PROVIDER=aws-translate
-AWS_REGION=ap-northeast-1
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-# Optional
-AWS_SESSION_TOKEN=
-```
-
 4. Run:
 
 ```bash
@@ -106,34 +75,6 @@ OPENAI_MODEL=MiniMax-M1
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
 
-Alibaba Cloud を使う場合は次の設定です。
-
-```dotenv
-TRANSLATION_PROVIDER=alibaba
-DASHSCOPE_API_KEY=your_dashscope_api_key
-ALIBABA_MODEL=qwen3-max
-ALIBABA_BASE_URL=https://dashscope-intl.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1
-```
-
-MiniMax を使う場合は次の設定です。
-
-```dotenv
-TRANSLATION_PROVIDER=minimax
-MINIMAX_API_KEY=your_minimax_api_key
-MINIMAX_MODEL=MiniMax-M1
-MINIMAX_BASE_URL=https://api.minimax.io/v1
-```
-
-AWS Translate を使う場合は次の設定です。
-
-```dotenv
-TRANSLATION_PROVIDER=aws-translate
-AWS_REGION=ap-northeast-1
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-AWS_SESSION_TOKEN=
-```
-
 ## Environment Variables
 
 For Astro local development, use `.env`.
@@ -142,19 +83,69 @@ For Astro local development, use `.env`.
 - `OPENAI_API_KEY=` (required when `TRANSLATION_PROVIDER=openai`)
 - `OPENAI_MODEL=gpt-4.1-mini` (optional)
 - `OPENAI_BASE_URL=https://api.openai.com/v1` (optional)
-- `DASHSCOPE_API_KEY=` (required when `TRANSLATION_PROVIDER=alibaba`)
-- `ALIBABA_MODEL=qwen3-max` (optional)
-- `ALIBABA_BASE_URL=https://dashscope-intl.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1` (optional)
-- `MINIMAX_API_KEY=` (required when `TRANSLATION_PROVIDER=minimax`)
-- `MINIMAX_MODEL=MiniMax-M1` (optional)
-- `MINIMAX_BASE_URL=https://api.minimax.io/v1` (optional)
-- `AWS_REGION=` (required when `TRANSLATION_PROVIDER=aws-translate`)
-- `AWS_ACCESS_KEY_ID=` and `AWS_SECRET_ACCESS_KEY=` (required unless runtime credentials are provided another way)
-- `AWS_SESSION_TOKEN=` (optional)
 
 For Cloudflare Pages runtime, set the same variables in Pages project settings.
 
 If you use Wrangler local runtime, `.dev.vars` is also supported.
+
+## Cloudflare Pages Setup
+
+This project is configured for Cloudflare Pages Functions.
+
+### `wrangler.jsonc`
+
+`wrangler.jsonc` includes:
+
+- `pages_build_output_dir: "./dist"`
+- `compatibility_flags: ["nodejs_compat"]`
+- `SESSION` KV binding placeholder for Astro sessions
+
+Before the first deployment, replace the placeholder KV IDs in `wrangler.jsonc`.
+
+### 1. Create the `SESSION` KV namespaces
+
+```bash
+npx wrangler kv namespace create SESSION
+npx wrangler kv namespace create SESSION --preview
+```
+
+Copy the returned IDs into `wrangler.jsonc`:
+
+```jsonc
+"kv_namespaces": [
+  {
+    "binding": "SESSION",
+    "id": "your-production-kv-id",
+    "preview_id": "your-preview-kv-id"
+  }
+]
+```
+
+### 2. Configure the Pages project
+
+In Cloudflare Pages:
+
+- Connect this GitHub repository
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Node.js version: `22`
+
+### 3. Add environment variables
+
+In Pages project settings, add the same runtime variables you use locally in `.env`.
+
+Examples:
+
+- `TRANSLATION_PROVIDER=mock`
+- `TRANSLATION_PROVIDER=openai` with `OPENAI_API_KEY`
+- `TRANSLATION_PROVIDER=openai` with `OPENAI_BASE_URL=https://api.minimax.io/v1`
+
+### 4. Bind the KV namespace in Pages
+
+In Pages project settings, add a KV binding:
+
+- Variable name: `SESSION`
+- KV namespace: the same namespace used in `wrangler.jsonc`
 
 ## Routes
 
@@ -179,6 +170,7 @@ Response:
   "mainTranslation": "...",
   "alternatives": ["..."],
   "nuanceNotes": ["..."],
+  "suggestedReplies": ["..."],
   "context": {
     "sourceLang": "ja",
     "targetLang": "vi",
@@ -218,11 +210,10 @@ Response:
 - `mock` provider: always available fallback
 - `openai` provider: calls `POST https://api.openai.com/v1/responses`
   `OPENAI_BASE_URL` を OpenAI-compatible endpoint に切り替えた場合は、その backend に応じて `responses` または `chat/completions` を自動選択
-- `alibaba` provider: calls Alibaba Cloud DashScope OpenAI-compatible `POST /responses`
-- `minimax` provider: calls MiniMax OpenAI-compatible `POST /chat/completions`
-- `aws-translate` provider: calls Amazon Translate for direct translation; reply examples are template-based because AWS Translate is not a generative model
 
 API route contracts are unchanged. `/api/translate` and `/api/reply` stay thin and delegate to the service layer.
+
+The homepage uses a single `/api/translate` request so translation and suggested replies are generated in one provider call. `/api/reply` remains available as a separate endpoint for compatibility.
 
 ## API Smoke Test (local)
 
@@ -259,16 +250,8 @@ curl -s -X POST http://localhost:4321/api/reply \
   - `.env` に `OPENAI_API_KEY` が設定されているか確認してください。
 - MiniMax を `openai` provider で使いたい
   - `OPENAI_BASE_URL=https://api.minimax.io/v1` と `OPENAI_MODEL=MiniMax-M1` を設定してください。
-- `DASHSCOPE_API_KEY is required when TRANSLATION_PROVIDER=alibaba.`
-  - `.env` に `DASHSCOPE_API_KEY` が設定されているか確認してください。
-- `MINIMAX_API_KEY is required when TRANSLATION_PROVIDER=minimax.`
-  - `.env` に `MINIMAX_API_KEY` が設定されているか確認してください。
-- `AWS_REGION is required when TRANSLATION_PROVIDER=aws-translate.`
-  - `.env` に `AWS_REGION` が設定されているか確認してください。
 - OpenAI 側エラーで `json_object` 関連メッセージが出る
   - 実装側で `json` 指示を入力に含める対応済みです。古い dev サーバープロセスを停止して再起動してください。
-- AWS Translate では言い換え候補やニュアンス説明は生成されない
-  - 現在は direct translation と reply template を返す実装です。生成品質が必要なら `openai` / `alibaba` / `minimax` を使ってください。
 - `npm run check` で `@rollup/rollup-linux-x64-gnu` 欠落エラー
   - npm の optional dependency 問題です。`npm i` を再実行してください。
 

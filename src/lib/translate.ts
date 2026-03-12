@@ -1,34 +1,25 @@
-import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate";
-import { buildReplyPrompt, buildTranslatePrompt } from "./prompt";
+import { env as cloudflareEnv } from "cloudflare:workers";
+import {
+  buildReplyPrompt,
+  buildTranslateWithRepliesPrompt
+} from "./prompt";
 import type {
-  Language,
   ReplyRequest,
   ReplyResponse,
-  Tone,
   TranslateRequest,
-  TranslateResponse
+  TranslateWithRepliesResponse
 } from "./types";
 
-export type TranslationProviderName =
-  | "mock"
-  | "openai"
-  | "alibaba"
-  | "minimax"
-  | "aws-translate";
+export type TranslationProviderName = "mock" | "openai";
 export type RuntimeEnv = Record<string, string | undefined> | undefined;
 
 interface TranslationProvider {
-  translate(input: TranslateRequest): Promise<TranslateResponse>;
+  translate(input: TranslateRequest): Promise<TranslateWithRepliesResponse>;
   suggestReplies(input: ReplyRequest): Promise<ReplyResponse>;
 }
 
 const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
 const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
-const DEFAULT_ALIBABA_MODEL = "qwen3-max";
-const DEFAULT_ALIBABA_BASE_URL =
-  "https://dashscope-intl.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1";
-const DEFAULT_MINIMAX_MODEL = "MiniMax-M1";
-const DEFAULT_MINIMAX_BASE_URL = "https://api.minimax.io/v1";
 
 interface CompatibleApiConfig {
   apiKey: string;
@@ -65,6 +56,11 @@ function readServerEnv(name: string, runtimeEnv?: RuntimeEnv): string | undefine
     return astroValue;
   }
 
+  const cloudflareValue = (cloudflareEnv as Record<string, unknown>)[name];
+  if (typeof cloudflareValue === "string" && cloudflareValue.length > 0) {
+    return cloudflareValue;
+  }
+
   return undefined;
 }
 
@@ -72,18 +68,6 @@ function getProviderName(runtimeEnv?: RuntimeEnv): TranslationProviderName {
   const raw = readServerEnv("TRANSLATION_PROVIDER", runtimeEnv)?.toLowerCase() ?? "mock";
   if (raw === "openai") {
     return "openai";
-  }
-
-  if (raw === "alibaba") {
-    return "alibaba";
-  }
-
-  if (raw === "minimax") {
-    return "minimax";
-  }
-
-  if (raw === "aws" || raw === "aws-translate") {
-    return "aws-translate";
   }
 
   return "mock";
@@ -111,32 +95,6 @@ function getOpenAIApiKey(runtimeEnv?: RuntimeEnv): string {
   return apiKey;
 }
 
-function getAlibabaApiKey(runtimeEnv?: RuntimeEnv): string {
-  const apiKey =
-    readServerEnv("DASHSCOPE_API_KEY", runtimeEnv) ??
-    readServerEnv("ALIBABA_API_KEY", runtimeEnv);
-
-  if (!apiKey) {
-    throw new TranslationProviderError(
-      "DASHSCOPE_API_KEY is required when TRANSLATION_PROVIDER=alibaba."
-    );
-  }
-
-  return apiKey;
-}
-
-function getAlibabaModel(runtimeEnv?: RuntimeEnv): string {
-  return readServerEnv("ALIBABA_MODEL", runtimeEnv) ?? DEFAULT_ALIBABA_MODEL;
-}
-
-function getAlibabaApiUrl(runtimeEnv?: RuntimeEnv): string {
-  const baseUrl = (
-    readServerEnv("ALIBABA_BASE_URL", runtimeEnv) ?? DEFAULT_ALIBABA_BASE_URL
-  ).replace(/\/+$/, "");
-
-  return `${baseUrl}/responses`;
-}
-
 function buildApiUrl(baseUrl: string, defaultPath: "responses" | "chat/completions"): string {
   if (baseUrl.endsWith("/responses") || baseUrl.endsWith("/chat/completions")) {
     return baseUrl;
@@ -148,64 +106,6 @@ function buildApiUrl(baseUrl: string, defaultPath: "responses" | "chat/completio
 function usesChatCompletionsForOpenAIProvider(baseUrl: string): boolean {
   const lowerBaseUrl = baseUrl.toLowerCase();
   return lowerBaseUrl.includes("minimax") || lowerBaseUrl.endsWith("/chat/completions");
-}
-
-function getMiniMaxApiKey(runtimeEnv?: RuntimeEnv): string {
-  const apiKey = readServerEnv("MINIMAX_API_KEY", runtimeEnv);
-  if (!apiKey) {
-    throw new TranslationProviderError(
-      "MINIMAX_API_KEY is required when TRANSLATION_PROVIDER=minimax."
-    );
-  }
-
-  return apiKey;
-}
-
-function getMiniMaxModel(runtimeEnv?: RuntimeEnv): string {
-  return readServerEnv("MINIMAX_MODEL", runtimeEnv) ?? DEFAULT_MINIMAX_MODEL;
-}
-
-function getMiniMaxApiUrl(runtimeEnv?: RuntimeEnv): string {
-  const baseUrl = (
-    readServerEnv("MINIMAX_BASE_URL", runtimeEnv) ?? DEFAULT_MINIMAX_BASE_URL
-  ).replace(/\/+$/, "");
-
-  return `${baseUrl}/chat/completions`;
-}
-
-function getAwsRegion(runtimeEnv?: RuntimeEnv): string {
-  const region =
-    readServerEnv("AWS_REGION", runtimeEnv) ?? readServerEnv("AWS_DEFAULT_REGION", runtimeEnv);
-
-  if (!region) {
-    throw new TranslationProviderError(
-      "AWS_REGION is required when TRANSLATION_PROVIDER=aws-translate."
-    );
-  }
-
-  return region;
-}
-
-function getAwsCredentials(runtimeEnv?: RuntimeEnv):
-  | {
-      accessKeyId: string;
-      secretAccessKey: string;
-      sessionToken?: string;
-    }
-  | undefined {
-  const accessKeyId = readServerEnv("AWS_ACCESS_KEY_ID", runtimeEnv);
-  const secretAccessKey = readServerEnv("AWS_SECRET_ACCESS_KEY", runtimeEnv);
-  const sessionToken = readServerEnv("AWS_SESSION_TOKEN", runtimeEnv);
-
-  if (!accessKeyId || !secretAccessKey) {
-    return undefined;
-  }
-
-  return {
-    accessKeyId,
-    secretAccessKey,
-    sessionToken
-  };
 }
 
 function toStringArray(value: unknown): string[] {
@@ -340,34 +240,6 @@ function extractOpenAIErrorMessage(status: number, payload: unknown): string {
   return `OpenAI API request failed with status ${status}.`;
 }
 
-function getReplyTemplates(tone: Tone): string[] {
-  if (tone === "casual") {
-    return [
-      "ありがとう。確認してまた連絡するね。",
-      "了解です。少し待ってください。",
-      "大丈夫です。よろしくお願いします。"
-    ];
-  }
-
-  if (tone === "polite") {
-    return [
-      "ありがとうございます。内容を確認のうえ、ご連絡いたします。",
-      "承知いたしました。少々お待ちください。",
-      "かしこまりました。よろしくお願いいたします。"
-    ];
-  }
-
-  return [
-    "ありがとうございます。確認してご連絡します。",
-    "承知しました。少々お待ちください。",
-    "了解しました。よろしくお願いします。"
-  ];
-}
-
-function mapAwsLanguageCode(language: Language): string {
-  return language === "ja" ? "ja" : "vi";
-}
-
 async function callCompatibleApiJson(
   config: CompatibleApiConfig,
   instructions: string,
@@ -490,7 +362,7 @@ async function callChatCompletionsJson(
 function normalizeTranslateResponse(
   data: Record<string, unknown>,
   input: TranslateRequest
-): TranslateResponse {
+): TranslateWithRepliesResponse {
   const mainTranslation =
     typeof data.mainTranslation === "string" ? data.mainTranslation.trim() : "";
 
@@ -502,6 +374,7 @@ function normalizeTranslateResponse(
     mainTranslation,
     alternatives: toStringArray(data.alternatives),
     nuanceNotes: toStringArray(data.nuanceNotes),
+    suggestedReplies: toStringArray(data.suggestedReplies),
     context: {
       sourceLang: input.sourceLang,
       targetLang: input.targetLang,
@@ -527,11 +400,12 @@ const TRANSLATE_INSTRUCTIONS = [
   "You are a professional translator focused on Japanese and Vietnamese.",
   "Always output valid JSON.",
   "Return exactly this shape:",
-  '{"mainTranslation":"string","alternatives":["string"],"nuanceNotes":["string"]}',
+  '{"mainTranslation":"string","alternatives":["string"],"nuanceNotes":["string"],"suggestedReplies":["string"]}',
   "Rules:",
   "- mainTranslation must be the best natural translation in target language.",
   "- alternatives should be 2 to 4 useful variants in target language.",
-  "- nuanceNotes should be 1 to 3 short notes explaining tone/context choices."
+  "- nuanceNotes should be 1 to 3 short notes explaining tone/context choices.",
+  "- suggestedReplies should be 2 to 4 short practical reply examples in target language."
 ].join("\n");
 
 const REPLY_INSTRUCTIONS = [
@@ -555,6 +429,11 @@ const mockProvider: TranslationProvider = {
       nuanceNotes: [
         `${input.mode}モードを想定した表現です。`,
         `${input.tone}トーンを優先しています。`
+      ],
+      suggestedReplies: [
+        `返信例1: ${cleanedText}`,
+        "返信例2: ありがとうございます。内容を確認します。",
+        "返信例3: 承知しました。よろしくお願いします。"
       ],
       context: {
         sourceLang: input.sourceLang,
@@ -591,7 +470,7 @@ function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
 
     return {
       async translate(input) {
-        const prompt = buildTranslatePrompt(input);
+        const prompt = buildTranslateWithRepliesPrompt(input);
         const data = await callChatCompletionsJson(
           config,
           TRANSLATE_INSTRUCTIONS,
@@ -618,7 +497,7 @@ function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
 
   return {
     async translate(input) {
-      const prompt = buildTranslatePrompt(input);
+      const prompt = buildTranslateWithRepliesPrompt(input);
       const data = await callCompatibleApiJson(config, TRANSLATE_INSTRUCTIONS, prompt, "translate");
       return normalizeTranslateResponse(data, input);
     },
@@ -627,132 +506,6 @@ function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
       const prompt = buildReplyPrompt(input);
       const data = await callCompatibleApiJson(config, REPLY_INSTRUCTIONS, prompt, "reply");
       return normalizeReplyResponse(data);
-    }
-  };
-}
-
-function createAlibabaProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
-  const config: CompatibleApiConfig = {
-    apiKey: getAlibabaApiKey(runtimeEnv),
-    apiUrl: getAlibabaApiUrl(runtimeEnv),
-    model: getAlibabaModel(runtimeEnv),
-    providerLabel: "Alibaba Cloud"
-  };
-
-  return {
-    async translate(input) {
-      const prompt = buildTranslatePrompt(input);
-      const data = await callCompatibleApiJson(config, TRANSLATE_INSTRUCTIONS, prompt, "translate");
-      return normalizeTranslateResponse(data, input);
-    },
-
-    async suggestReplies(input) {
-      const prompt = buildReplyPrompt(input);
-      const data = await callCompatibleApiJson(config, REPLY_INSTRUCTIONS, prompt, "reply");
-      return normalizeReplyResponse(data);
-    }
-  };
-}
-
-function createMiniMaxProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
-  const config: ChatCompletionsApiConfig = {
-    apiKey: getMiniMaxApiKey(runtimeEnv),
-    apiUrl: getMiniMaxApiUrl(runtimeEnv),
-    model: getMiniMaxModel(runtimeEnv),
-    providerLabel: "MiniMax"
-  };
-
-  return {
-    async translate(input) {
-      const prompt = buildTranslatePrompt(input);
-      const data = await callChatCompletionsJson(
-        config,
-        TRANSLATE_INSTRUCTIONS,
-        prompt,
-        "translate"
-      );
-      return normalizeTranslateResponse(data, input);
-    },
-
-    async suggestReplies(input) {
-      const prompt = buildReplyPrompt(input);
-      const data = await callChatCompletionsJson(config, REPLY_INSTRUCTIONS, prompt, "reply");
-      return normalizeReplyResponse(data);
-    }
-  };
-}
-
-function createAwsTranslateProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
-  const client = new TranslateClient({
-    region: getAwsRegion(runtimeEnv),
-    credentials: getAwsCredentials(runtimeEnv)
-  });
-
-  async function translatePlainText(
-    text: string,
-    sourceLang: Language,
-    targetLang: Language
-  ): Promise<string> {
-    const response = await client.send(
-      new TranslateTextCommand({
-        SourceLanguageCode: mapAwsLanguageCode(sourceLang),
-        TargetLanguageCode: mapAwsLanguageCode(targetLang),
-        Text: text
-      })
-    );
-
-    const translatedText = response.TranslatedText?.trim();
-    if (!translatedText) {
-      throw new TranslationProviderError("AWS Translate returned an empty response.");
-    }
-
-    return translatedText;
-  }
-
-  return {
-    async translate(input) {
-      try {
-        const mainTranslation = await translatePlainText(
-          input.text,
-          input.sourceLang,
-          input.targetLang
-        );
-
-        return {
-          mainTranslation,
-          alternatives: [],
-          nuanceNotes: [
-            "AWS Translate provider returns direct translation only.",
-            "Alternatives and nuance notes are limited compared with LLM providers."
-          ],
-          context: {
-            sourceLang: input.sourceLang,
-            targetLang: input.targetLang,
-            mode: input.mode,
-            tone: input.tone
-          }
-        };
-      } catch (cause) {
-        throw new TranslationProviderError("AWS Translate request failed.", cause);
-      }
-    },
-
-    async suggestReplies(input) {
-      try {
-        const templates = getReplyTemplates(input.tone);
-
-        if (input.targetLang === "ja") {
-          return { suggestedReplies: templates };
-        }
-
-        const suggestedReplies = await Promise.all(
-          templates.map((template) => translatePlainText(template, "ja", input.targetLang))
-        );
-
-        return { suggestedReplies };
-      } catch (cause) {
-        throw new TranslationProviderError("AWS Translate reply generation failed.", cause);
-      }
     }
   };
 }
@@ -761,18 +514,6 @@ function createProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
   const providerName = getProviderName(runtimeEnv);
   if (providerName === "openai") {
     return createOpenAIProvider(runtimeEnv);
-  }
-
-  if (providerName === "alibaba") {
-    return createAlibabaProvider(runtimeEnv);
-  }
-
-  if (providerName === "minimax") {
-    return createMiniMaxProvider(runtimeEnv);
-  }
-
-  if (providerName === "aws-translate") {
-    return createAwsTranslateProvider(runtimeEnv);
   }
 
   return mockProvider;
@@ -793,7 +534,7 @@ function toProviderError(cause: unknown): TranslationProviderError {
 export async function translateText(
   input: TranslateRequest,
   runtimeEnv?: RuntimeEnv
-): Promise<TranslateResponse> {
+): Promise<TranslateWithRepliesResponse> {
   const provider = createProvider(runtimeEnv);
 
   try {
