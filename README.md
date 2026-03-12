@@ -217,7 +217,7 @@ API route contracts are unchanged. `/api/translate` and `/api/reply` stay thin a
 
 The homepage uses a single `/api/translate` request so translation and suggested replies are generated in one provider call. `/api/reply` remains available as a separate endpoint for compatibility.
 
-For Cloudflare Pages CI, the build script removes generated `_worker.js/wrangler.json` and `_worker.js/.dev.vars` after `astro build`. This avoids Pages validating the redirected worker config instead of the project-level `wrangler.jsonc`.
+For Cloudflare Pages CI, the build script removes generated `_worker.js/wrangler.json`, `_worker.js/.dev.vars`, and `.wrangler/deploy/config.json` after `astro build`. This avoids Pages validating or following redirected worker config files instead of the project-level `wrangler.jsonc`.
 
 ## API Smoke Test (local)
 

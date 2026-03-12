@@ -1,6 +1,10 @@
 import { rm } from "node:fs/promises";
 
-const generatedFiles = ["dist/_worker.js/wrangler.json", "dist/_worker.js/.dev.vars"];
+const generatedFiles = [
+  "dist/_worker.js/wrangler.json",
+  "dist/_worker.js/.dev.vars",
+  ".wrangler/deploy/config.json"
+];
 
 for (const filePath of generatedFiles) {
   try {
