@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.7",
+    "@aws-sdk/client-translate": "^3.888.0",
     "astro": "^5.14.4"
   },
   "devDependencies": {

@@ -1,7 +1,20 @@
+import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate";
 import { buildReplyPrompt, buildTranslatePrompt } from "./prompt";
-import type { ReplyRequest, ReplyResponse, TranslateRequest, TranslateResponse } from "./types";
+import type {
+  Language,
+  ReplyRequest,
+  ReplyResponse,
+  Tone,
+  TranslateRequest,
+  TranslateResponse
+} from "./types";
 
-export type TranslationProviderName = "mock" | "openai";
+export type TranslationProviderName =
+  | "mock"
+  | "openai"
+  | "alibaba"
+  | "minimax"
+  | "aws-translate";
 export type RuntimeEnv = Record<string, string | undefined> | undefined;
 
 interface TranslationProvider {
@@ -9,8 +22,27 @@ interface TranslationProvider {
   suggestReplies(input: ReplyRequest): Promise<ReplyResponse>;
 }
 
-const OPENAI_API_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
+const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
+const DEFAULT_ALIBABA_MODEL = "qwen3-max";
+const DEFAULT_ALIBABA_BASE_URL =
+  "https://dashscope-intl.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1";
+const DEFAULT_MINIMAX_MODEL = "MiniMax-M1";
+const DEFAULT_MINIMAX_BASE_URL = "https://api.minimax.io/v1";
+
+interface CompatibleApiConfig {
+  apiKey: string;
+  apiUrl: string;
+  model: string;
+  providerLabel: string;
+}
+
+interface ChatCompletionsApiConfig {
+  apiKey: string;
+  apiUrl: string;
+  model: string;
+  providerLabel: string;
+}
 
 class TranslationProviderError extends Error {
   cause?: unknown;
@@ -38,11 +70,34 @@ function readServerEnv(name: string, runtimeEnv?: RuntimeEnv): string | undefine
 
 function getProviderName(runtimeEnv?: RuntimeEnv): TranslationProviderName {
   const raw = readServerEnv("TRANSLATION_PROVIDER", runtimeEnv)?.toLowerCase() ?? "mock";
-  return raw === "openai" ? "openai" : "mock";
+  if (raw === "openai") {
+    return "openai";
+  }
+
+  if (raw === "alibaba") {
+    return "alibaba";
+  }
+
+  if (raw === "minimax") {
+    return "minimax";
+  }
+
+  if (raw === "aws" || raw === "aws-translate") {
+    return "aws-translate";
+  }
+
+  return "mock";
 }
 
 function getOpenAIModel(runtimeEnv?: RuntimeEnv): string {
   return readServerEnv("OPENAI_MODEL", runtimeEnv) ?? DEFAULT_OPENAI_MODEL;
+}
+
+function getOpenAIBaseUrl(runtimeEnv?: RuntimeEnv): string {
+  return (readServerEnv("OPENAI_BASE_URL", runtimeEnv) ?? DEFAULT_OPENAI_BASE_URL).replace(
+    /\/+$/,
+    ""
+  );
 }
 
 function getOpenAIApiKey(runtimeEnv?: RuntimeEnv): string {
@@ -54,6 +109,103 @@ function getOpenAIApiKey(runtimeEnv?: RuntimeEnv): string {
   }
 
   return apiKey;
+}
+
+function getAlibabaApiKey(runtimeEnv?: RuntimeEnv): string {
+  const apiKey =
+    readServerEnv("DASHSCOPE_API_KEY", runtimeEnv) ??
+    readServerEnv("ALIBABA_API_KEY", runtimeEnv);
+
+  if (!apiKey) {
+    throw new TranslationProviderError(
+      "DASHSCOPE_API_KEY is required when TRANSLATION_PROVIDER=alibaba."
+    );
+  }
+
+  return apiKey;
+}
+
+function getAlibabaModel(runtimeEnv?: RuntimeEnv): string {
+  return readServerEnv("ALIBABA_MODEL", runtimeEnv) ?? DEFAULT_ALIBABA_MODEL;
+}
+
+function getAlibabaApiUrl(runtimeEnv?: RuntimeEnv): string {
+  const baseUrl = (
+    readServerEnv("ALIBABA_BASE_URL", runtimeEnv) ?? DEFAULT_ALIBABA_BASE_URL
+  ).replace(/\/+$/, "");
+
+  return `${baseUrl}/responses`;
+}
+
+function buildApiUrl(baseUrl: string, defaultPath: "responses" | "chat/completions"): string {
+  if (baseUrl.endsWith("/responses") || baseUrl.endsWith("/chat/completions")) {
+    return baseUrl;
+  }
+
+  return `${baseUrl}/${defaultPath}`;
+}
+
+function usesChatCompletionsForOpenAIProvider(baseUrl: string): boolean {
+  const lowerBaseUrl = baseUrl.toLowerCase();
+  return lowerBaseUrl.includes("minimax") || lowerBaseUrl.endsWith("/chat/completions");
+}
+
+function getMiniMaxApiKey(runtimeEnv?: RuntimeEnv): string {
+  const apiKey = readServerEnv("MINIMAX_API_KEY", runtimeEnv);
+  if (!apiKey) {
+    throw new TranslationProviderError(
+      "MINIMAX_API_KEY is required when TRANSLATION_PROVIDER=minimax."
+    );
+  }
+
+  return apiKey;
+}
+
+function getMiniMaxModel(runtimeEnv?: RuntimeEnv): string {
+  return readServerEnv("MINIMAX_MODEL", runtimeEnv) ?? DEFAULT_MINIMAX_MODEL;
+}
+
+function getMiniMaxApiUrl(runtimeEnv?: RuntimeEnv): string {
+  const baseUrl = (
+    readServerEnv("MINIMAX_BASE_URL", runtimeEnv) ?? DEFAULT_MINIMAX_BASE_URL
+  ).replace(/\/+$/, "");
+
+  return `${baseUrl}/chat/completions`;
+}
+
+function getAwsRegion(runtimeEnv?: RuntimeEnv): string {
+  const region =
+    readServerEnv("AWS_REGION", runtimeEnv) ?? readServerEnv("AWS_DEFAULT_REGION", runtimeEnv);
+
+  if (!region) {
+    throw new TranslationProviderError(
+      "AWS_REGION is required when TRANSLATION_PROVIDER=aws-translate."
+    );
+  }
+
+  return region;
+}
+
+function getAwsCredentials(runtimeEnv?: RuntimeEnv):
+  | {
+      accessKeyId: string;
+      secretAccessKey: string;
+      sessionToken?: string;
+    }
+  | undefined {
+  const accessKeyId = readServerEnv("AWS_ACCESS_KEY_ID", runtimeEnv);
+  const secretAccessKey = readServerEnv("AWS_SECRET_ACCESS_KEY", runtimeEnv);
+  const sessionToken = readServerEnv("AWS_SESSION_TOKEN", runtimeEnv);
+
+  if (!accessKeyId || !secretAccessKey) {
+    return undefined;
+  }
+
+  return {
+    accessKeyId,
+    secretAccessKey,
+    sessionToken
+  };
 }
 
 function toStringArray(value: unknown): string[] {
@@ -89,6 +241,15 @@ function parseJsonObject(text: string): Record<string, unknown> {
   }
 
   throw new TranslationProviderError("OpenAI response was not valid JSON.");
+}
+
+function stripStructuredNoise(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 }
 
 function extractOpenAIOutputText(payload: unknown): string {
@@ -137,6 +298,34 @@ function extractOpenAIOutputText(payload: unknown): string {
   return parts.join("\n").trim();
 }
 
+function extractChatCompletionsText(payload: unknown): string {
+  if (!payload || typeof payload !== "object") {
+    return "";
+  }
+
+  const choices = (payload as { choices?: unknown }).choices;
+  if (!Array.isArray(choices) || choices.length === 0) {
+    return "";
+  }
+
+  const firstChoice = choices[0];
+  if (!firstChoice || typeof firstChoice !== "object") {
+    return "";
+  }
+
+  const message = (firstChoice as { message?: unknown }).message;
+  if (!message || typeof message !== "object") {
+    return "";
+  }
+
+  const content = (message as { content?: unknown }).content;
+  if (typeof content === "string") {
+    return stripStructuredNoise(content);
+  }
+
+  return "";
+}
+
 function extractOpenAIErrorMessage(status: number, payload: unknown): string {
   if (payload && typeof payload === "object") {
     const error = (payload as { error?: unknown }).error;
@@ -151,28 +340,53 @@ function extractOpenAIErrorMessage(status: number, payload: unknown): string {
   return `OpenAI API request failed with status ${status}.`;
 }
 
-async function callOpenAIJson(
-  runtimeEnv: RuntimeEnv,
+function getReplyTemplates(tone: Tone): string[] {
+  if (tone === "casual") {
+    return [
+      "ありがとう。確認してまた連絡するね。",
+      "了解です。少し待ってください。",
+      "大丈夫です。よろしくお願いします。"
+    ];
+  }
+
+  if (tone === "polite") {
+    return [
+      "ありがとうございます。内容を確認のうえ、ご連絡いたします。",
+      "承知いたしました。少々お待ちください。",
+      "かしこまりました。よろしくお願いいたします。"
+    ];
+  }
+
+  return [
+    "ありがとうございます。確認してご連絡します。",
+    "承知しました。少々お待ちください。",
+    "了解しました。よろしくお願いします。"
+  ];
+}
+
+function mapAwsLanguageCode(language: Language): string {
+  return language === "ja" ? "ja" : "vi";
+}
+
+async function callCompatibleApiJson(
+  config: CompatibleApiConfig,
   instructions: string,
   input: string,
   schemaHint: string
 ): Promise<Record<string, unknown>> {
-  const apiKey = getOpenAIApiKey(runtimeEnv);
-  const model = getOpenAIModel(runtimeEnv);
-
   let response: Response;
 
   try {
     const inputWithJsonHint = `Return output as valid json.\n${input}`;
 
-    response = await fetch(OPENAI_API_URL, {
+    response = await fetch(config.apiUrl, {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`
+        authorization: `Bearer ${config.apiKey}`
       },
       body: JSON.stringify({
-        model,
+        model: config.model,
         instructions,
         input: inputWithJsonHint,
         text: {
@@ -183,7 +397,7 @@ async function callOpenAIJson(
       })
     });
   } catch (cause) {
-    throw new TranslationProviderError("Failed to reach OpenAI API.", cause);
+    throw new TranslationProviderError(`Failed to reach ${config.providerLabel} API.`, cause);
   }
 
   let payload: unknown = null;
@@ -199,13 +413,75 @@ async function callOpenAIJson(
 
   const outputText = extractOpenAIOutputText(payload);
   if (!outputText) {
-    throw new TranslationProviderError("OpenAI returned an empty response.");
+    throw new TranslationProviderError(`${config.providerLabel} returned an empty response.`);
   }
 
   const parsed = parseJsonObject(outputText);
 
   if (!parsed || typeof parsed !== "object") {
-    throw new TranslationProviderError(`OpenAI returned invalid ${schemaHint} JSON.`);
+    throw new TranslationProviderError(
+      `${config.providerLabel} returned invalid ${schemaHint} JSON.`
+    );
+  }
+
+  return parsed;
+}
+
+async function callChatCompletionsJson(
+  config: ChatCompletionsApiConfig,
+  instructions: string,
+  input: string,
+  schemaHint: string
+): Promise<Record<string, unknown>> {
+  let response: Response;
+
+  try {
+    response = await fetch(config.apiUrl, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${config.apiKey}`
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          {
+            role: "system",
+            content: `${instructions}\nAlways return valid JSON only.`
+          },
+          {
+            role: "user",
+            content: `Return output as valid json.\n${input}`
+          }
+        ],
+        temperature: 0.2
+      })
+    });
+  } catch (cause) {
+    throw new TranslationProviderError(`Failed to reach ${config.providerLabel} API.`, cause);
+  }
+
+  let payload: unknown = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    throw new TranslationProviderError(extractOpenAIErrorMessage(response.status, payload));
+  }
+
+  const outputText = extractChatCompletionsText(payload);
+  if (!outputText) {
+    throw new TranslationProviderError(`${config.providerLabel} returned an empty response.`);
+  }
+
+  const parsed = parseJsonObject(outputText);
+  if (!parsed || typeof parsed !== "object") {
+    throw new TranslationProviderError(
+      `${config.providerLabel} returned invalid ${schemaHint} JSON.`
+    );
   }
 
   return parsed;
@@ -301,24 +577,205 @@ const mockProvider: TranslationProvider = {
 };
 
 function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
+  const apiKey = getOpenAIApiKey(runtimeEnv);
+  const model = getOpenAIModel(runtimeEnv);
+  const baseUrl = getOpenAIBaseUrl(runtimeEnv);
+
+  if (usesChatCompletionsForOpenAIProvider(baseUrl)) {
+    const config: ChatCompletionsApiConfig = {
+      apiKey,
+      apiUrl: buildApiUrl(baseUrl, "chat/completions"),
+      model,
+      providerLabel: "OpenAI-compatible"
+    };
+
+    return {
+      async translate(input) {
+        const prompt = buildTranslatePrompt(input);
+        const data = await callChatCompletionsJson(
+          config,
+          TRANSLATE_INSTRUCTIONS,
+          prompt,
+          "translate"
+        );
+        return normalizeTranslateResponse(data, input);
+      },
+
+      async suggestReplies(input) {
+        const prompt = buildReplyPrompt(input);
+        const data = await callChatCompletionsJson(config, REPLY_INSTRUCTIONS, prompt, "reply");
+        return normalizeReplyResponse(data);
+      }
+    };
+  }
+
+  const config: CompatibleApiConfig = {
+    apiKey,
+    apiUrl: buildApiUrl(baseUrl, "responses"),
+    model,
+    providerLabel: "OpenAI"
+  };
+
   return {
     async translate(input) {
       const prompt = buildTranslatePrompt(input);
-      const data = await callOpenAIJson(runtimeEnv, TRANSLATE_INSTRUCTIONS, prompt, "translate");
+      const data = await callCompatibleApiJson(config, TRANSLATE_INSTRUCTIONS, prompt, "translate");
       return normalizeTranslateResponse(data, input);
     },
 
     async suggestReplies(input) {
       const prompt = buildReplyPrompt(input);
-      const data = await callOpenAIJson(runtimeEnv, REPLY_INSTRUCTIONS, prompt, "reply");
+      const data = await callCompatibleApiJson(config, REPLY_INSTRUCTIONS, prompt, "reply");
       return normalizeReplyResponse(data);
+    }
+  };
+}
+
+function createAlibabaProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
+  const config: CompatibleApiConfig = {
+    apiKey: getAlibabaApiKey(runtimeEnv),
+    apiUrl: getAlibabaApiUrl(runtimeEnv),
+    model: getAlibabaModel(runtimeEnv),
+    providerLabel: "Alibaba Cloud"
+  };
+
+  return {
+    async translate(input) {
+      const prompt = buildTranslatePrompt(input);
+      const data = await callCompatibleApiJson(config, TRANSLATE_INSTRUCTIONS, prompt, "translate");
+      return normalizeTranslateResponse(data, input);
+    },
+
+    async suggestReplies(input) {
+      const prompt = buildReplyPrompt(input);
+      const data = await callCompatibleApiJson(config, REPLY_INSTRUCTIONS, prompt, "reply");
+      return normalizeReplyResponse(data);
+    }
+  };
+}
+
+function createMiniMaxProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
+  const config: ChatCompletionsApiConfig = {
+    apiKey: getMiniMaxApiKey(runtimeEnv),
+    apiUrl: getMiniMaxApiUrl(runtimeEnv),
+    model: getMiniMaxModel(runtimeEnv),
+    providerLabel: "MiniMax"
+  };
+
+  return {
+    async translate(input) {
+      const prompt = buildTranslatePrompt(input);
+      const data = await callChatCompletionsJson(
+        config,
+        TRANSLATE_INSTRUCTIONS,
+        prompt,
+        "translate"
+      );
+      return normalizeTranslateResponse(data, input);
+    },
+
+    async suggestReplies(input) {
+      const prompt = buildReplyPrompt(input);
+      const data = await callChatCompletionsJson(config, REPLY_INSTRUCTIONS, prompt, "reply");
+      return normalizeReplyResponse(data);
+    }
+  };
+}
+
+function createAwsTranslateProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
+  const client = new TranslateClient({
+    region: getAwsRegion(runtimeEnv),
+    credentials: getAwsCredentials(runtimeEnv)
+  });
+
+  async function translatePlainText(
+    text: string,
+    sourceLang: Language,
+    targetLang: Language
+  ): Promise<string> {
+    const response = await client.send(
+      new TranslateTextCommand({
+        SourceLanguageCode: mapAwsLanguageCode(sourceLang),
+        TargetLanguageCode: mapAwsLanguageCode(targetLang),
+        Text: text
+      })
+    );
+
+    const translatedText = response.TranslatedText?.trim();
+    if (!translatedText) {
+      throw new TranslationProviderError("AWS Translate returned an empty response.");
+    }
+
+    return translatedText;
+  }
+
+  return {
+    async translate(input) {
+      try {
+        const mainTranslation = await translatePlainText(
+          input.text,
+          input.sourceLang,
+          input.targetLang
+        );
+
+        return {
+          mainTranslation,
+          alternatives: [],
+          nuanceNotes: [
+            "AWS Translate provider returns direct translation only.",
+            "Alternatives and nuance notes are limited compared with LLM providers."
+          ],
+          context: {
+            sourceLang: input.sourceLang,
+            targetLang: input.targetLang,
+            mode: input.mode,
+            tone: input.tone
+          }
+        };
+      } catch (cause) {
+        throw new TranslationProviderError("AWS Translate request failed.", cause);
+      }
+    },
+
+    async suggestReplies(input) {
+      try {
+        const templates = getReplyTemplates(input.tone);
+
+        if (input.targetLang === "ja") {
+          return { suggestedReplies: templates };
+        }
+
+        const suggestedReplies = await Promise.all(
+          templates.map((template) => translatePlainText(template, "ja", input.targetLang))
+        );
+
+        return { suggestedReplies };
+      } catch (cause) {
+        throw new TranslationProviderError("AWS Translate reply generation failed.", cause);
+      }
     }
   };
 }
 
 function createProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
   const providerName = getProviderName(runtimeEnv);
-  return providerName === "openai" ? createOpenAIProvider(runtimeEnv) : mockProvider;
+  if (providerName === "openai") {
+    return createOpenAIProvider(runtimeEnv);
+  }
+
+  if (providerName === "alibaba") {
+    return createAlibabaProvider(runtimeEnv);
+  }
+
+  if (providerName === "minimax") {
+    return createMiniMaxProvider(runtimeEnv);
+  }
+
+  if (providerName === "aws-translate") {
+    return createAwsTranslateProvider(runtimeEnv);
+  }
+
+  return mockProvider;
 }
 
 function toProviderError(cause: unknown): TranslationProviderError {
