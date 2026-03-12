@@ -100,6 +100,7 @@ This project is configured for Cloudflare Pages Functions.
 - `compatibility_flags: ["nodejs_compat"]`
 - `SESSION` KV binding for Astro sessions
 - `env.preview` uses the same `SESSION` KV namespace as production by default
+- No `main` field, because this repository deploys to Cloudflare Pages, not a standalone Worker
 
 If you need Preview and Production to be isolated, add a separate Preview KV namespace later.
 

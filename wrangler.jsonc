@@ -6,7 +6,6 @@
 		"nodejs_compat"
 	],
 	"pages_build_output_dir": "./dist",
-	"main": "@astrojs/cloudflare/entrypoints/server",
 	// Astro's Cloudflare adapter expects a KV binding for sessions.
 	// Preview uses the same KV namespace for now. Split it later if isolation is needed.
 	"kv_namespaces": [
