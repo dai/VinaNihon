@@ -29,6 +29,10 @@ export interface TranslateResponse {
   context: TranslateContext;
 }
 
+export interface TranslateWithRepliesResponse extends TranslateResponse {
+  suggestedReplies: string[];
+}
+
 export interface ReplyRequest {
   sourceLang: Language;
   targetLang: Language;

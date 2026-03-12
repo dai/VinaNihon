@@ -1,5 +1,13 @@
 import type { APIRoute } from "astro";
-import { LANGUAGES, MODES, TONES, type Language, type Mode, type ReplyRequest, type Tone } from "../../lib/types";
+import {
+  LANGUAGES,
+  MODES,
+  TONES,
+  type Language,
+  type Mode,
+  type ReplyRequest,
+  type Tone
+} from "../../lib/types";
 import { suggestReplies } from "../../lib/translate";
 
 export const prerender = false;
@@ -67,11 +75,6 @@ function parseRequestBody(body: unknown): ReplyRequest | null {
   };
 }
 
-function getRuntimeEnv(context: Parameters<APIRoute>[0]): Record<string, string | undefined> | undefined {
-  return ((context.locals as { runtime?: { env?: Record<string, string | undefined> } }).runtime?.env ??
-    undefined) as Record<string, string | undefined> | undefined;
-}
-
 export const POST: APIRoute = async (context) => {
   let body: unknown;
 
@@ -87,7 +90,7 @@ export const POST: APIRoute = async (context) => {
   }
 
   try {
-    const result = await suggestReplies(input, getRuntimeEnv(context));
+    const result = await suggestReplies(input);
     return json(result, 200);
   } catch (cause) {
     console.error("/api/reply failed", cause);

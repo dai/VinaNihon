@@ -1,10 +1,11 @@
 import type { ReplyRequest, TranslateRequest } from "./types";
 
-export function buildTranslatePrompt(input: TranslateRequest): string {
+export function buildTranslateWithRepliesPrompt(input: TranslateRequest): string {
   return [
     `Translate from ${input.sourceLang} to ${input.targetLang}.`,
     `Mode: ${input.mode}.`,
     `Tone: ${input.tone}.`,
+    "Also generate short suggested replies in the target language.",
     `Text: ${input.text}`
   ].join("\n");
 }

@@ -142,11 +142,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       return payload;
     }
 
-    function showResult(translateData, replyData) {
+    function showResult(translateData) {
       mainTranslation.textContent = translateData.mainTranslation || "";
       renderList(alternativesList, translateData.alternatives);
       renderList(nuanceNotesList, translateData.nuanceNotes);
-      renderList(suggestedRepliesList, replyData.suggestedReplies);
+      renderList(suggestedRepliesList, translateData.suggestedReplies);
 
       resultCard.classList.remove("is-hidden");
     }
@@ -213,24 +213,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         });
 
         const translateData = await parseResponse(translateResponse);
-
-        const replyPayload = {
-          sourceLang: translatePayload.sourceLang,
-          targetLang: translatePayload.targetLang,
-          originalText: text,
-          mainTranslation: translateData.mainTranslation,
-          mode: translatePayload.mode,
-          tone: translatePayload.tone
-        };
-
-        const replyResponse = await fetch("/api/reply", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(replyPayload)
-        });
-
-        const replyData = await parseResponse(replyResponse);
-        showResult(translateData, replyData);
+        showResult(translateData);
       } catch (error) {
         const message = error instanceof Error ? error.message : "翻訳処理に失敗しました。";
         setError(message);

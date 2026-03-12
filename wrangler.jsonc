@@ -1,6 +1,27 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "vinanihon",
-  "compatibility_date": "2026-03-11",
-  "pages_build_output_dir": "./dist"
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "vinanihon",
+	"compatibility_date": "2026-03-11",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"pages_build_output_dir": "./dist",
+	// Astro's Cloudflare adapter expects a KV binding for sessions.
+	// Preview uses the same KV namespace for now. Split it later if isolation is needed.
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "2a41b5eab68a40ce9e51c8c787b53f98"
+		}
+	],
+	"env": {
+		"preview": {
+			"kv_namespaces": [
+				{
+					"binding": "SESSION",
+					"id": "2a41b5eab68a40ce9e51c8c787b53f98"
+				}
+			]
+		}
+	}
 }
