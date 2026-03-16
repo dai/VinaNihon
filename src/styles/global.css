@@ -82,7 +82,9 @@ body {
 select,
 textarea,
 .submit-button,
-.swap-button {
+.swap-button,
+.copy-button,
+.voice-button {
   font: inherit;
 }
 
@@ -98,6 +100,12 @@ textarea {
 
 textarea {
   resize: vertical;
+}
+
+.field-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .swap-button {
@@ -137,6 +145,13 @@ textarea {
   font-size: 0.9rem;
 }
 
+.voice-status {
+  min-height: 1.2em;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .form-error {
   margin: 6px 0 0;
   color: var(--error);
@@ -167,7 +182,15 @@ textarea {
   margin-bottom: 6px;
 }
 
-.copy-button {
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.copy-button,
+.voice-button {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #fff;
@@ -183,9 +206,16 @@ textarea {
   color: var(--primary);
 }
 
-.copy-button.is-copied {
+.copy-button.is-copied,
+.voice-button:hover:enabled,
+.voice-button.is-active {
   border-color: var(--primary);
   color: var(--primary);
+}
+
+.voice-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .main-translation {

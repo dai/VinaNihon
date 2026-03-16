@@ -4,9 +4,21 @@
   <section class="result-section">
     <div class="result-section-head">
       <h3>主翻訳</h3>
-      <button type="button" class="copy-button" data-copy-kind="main" aria-label="主翻訳をコピー">
-        コピー
-      </button>
+      <div class="action-group">
+        <button
+          type="button"
+          class="voice-button"
+          data-voice-action="speak"
+          data-speak-kind="main"
+          data-default-label="読み上げ"
+          aria-label="主翻訳を読み上げる"
+        >
+          読み上げ
+        </button>
+        <button type="button" class="copy-button" data-copy-kind="main" aria-label="主翻訳をコピー">
+          コピー
+        </button>
+      </div>
     </div>
     <p id="mainTranslation" class="main-translation"></p>
   </section>
@@ -14,9 +26,21 @@
   <section class="result-section">
     <div class="result-section-head">
       <h3>言い換え候補</h3>
-      <button type="button" class="copy-button" data-copy-kind="alternatives" aria-label="言い換え候補をコピー">
-        コピー
-      </button>
+      <div class="action-group">
+        <button
+          type="button"
+          class="voice-button"
+          data-voice-action="speak"
+          data-speak-kind="alternatives"
+          data-default-label="読み上げ"
+          aria-label="言い換え候補を読み上げる"
+        >
+          読み上げ
+        </button>
+        <button type="button" class="copy-button" data-copy-kind="alternatives" aria-label="言い換え候補をコピー">
+          コピー
+        </button>
+      </div>
     </div>
     <ul id="alternativesList" class="result-list"></ul>
   </section>
@@ -24,9 +48,21 @@
   <section class="result-section">
     <div class="result-section-head">
       <h3>ニュアンスメモ</h3>
-      <button type="button" class="copy-button" data-copy-kind="nuance" aria-label="ニュアンスメモをコピー">
-        コピー
-      </button>
+      <div class="action-group">
+        <button
+          type="button"
+          class="voice-button"
+          data-voice-action="speak"
+          data-speak-kind="nuance"
+          data-default-label="読み上げ"
+          aria-label="ニュアンスメモを読み上げる"
+        >
+          読み上げ
+        </button>
+        <button type="button" class="copy-button" data-copy-kind="nuance" aria-label="ニュアンスメモをコピー">
+          コピー
+        </button>
+      </div>
     </div>
     <ul id="nuanceNotesList" class="result-list"></ul>
   </section>
@@ -34,9 +70,21 @@
   <section class="result-section">
     <div class="result-section-head">
       <h3>返信例</h3>
-      <button type="button" class="copy-button" data-copy-kind="replies" aria-label="返信例をコピー">
-        コピー
-      </button>
+      <div class="action-group">
+        <button
+          type="button"
+          class="voice-button"
+          data-voice-action="speak"
+          data-speak-kind="replies"
+          data-default-label="読み上げ"
+          aria-label="返信例を読み上げる"
+        >
+          読み上げ
+        </button>
+        <button type="button" class="copy-button" data-copy-kind="replies" aria-label="返信例をコピー">
+          コピー
+        </button>
+      </div>
     </div>
     <ul id="suggestedRepliesList" class="result-list"></ul>
   </section>
