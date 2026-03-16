@@ -20,6 +20,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const tone = document.getElementById("tone");
     const submitButton = document.getElementById("translateSubmit");
     const formStatus = document.getElementById("formStatus");
+    const voiceStatus = document.getElementById("voiceStatus");
     const formError = document.getElementById("formError");
 
     const resultCard = document.getElementById("translationResult");
@@ -28,6 +29,22 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const nuanceNotesList = document.getElementById("nuanceNotesList");
     const suggestedRepliesList = document.getElementById("suggestedRepliesList");
     const copyTimers = new WeakMap();
+    const speakButtons = Array.from(document.querySelectorAll('[data-voice-action="speak"]'));
+    const listenButtons = Array.from(document.querySelectorAll('[data-voice-action="listen"]'));
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speechSynthesisApi = window.speechSynthesis;
+    const speechLanguageMap = {
+      ja: "ja-JP",
+      vi: "vi-VN"
+    };
+    let activeRecognition = null;
+    let activeListenButton = null;
+    let activeSpeakButton = null;
+    let speechVoices = [];
+
+    function setVoiceStatus(message) {
+      voiceStatus.textContent = message;
+    }
 
     function setLoading(isLoading) {
       submitButton.disabled = isLoading;
@@ -72,6 +89,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
 
     function getCopyText(kind) {
+      if (kind === "source") {
+        return sourceText.value.trim();
+      }
+
       if (kind === "main") {
         return (mainTranslation.textContent || "").trim();
       }
@@ -89,6 +110,245 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       }
 
       return "";
+    }
+
+    function getSpeechLanguage(kind) {
+      const language =
+        kind === "source" ? speechLanguageMap[sourceLang.value] : speechLanguageMap[targetLang.value];
+
+      return language || "ja-JP";
+    }
+
+    function setVoiceButtonState(button, isActive) {
+      const defaultLabel = button.dataset.defaultLabel || "";
+      button.textContent = isActive ? "停止" : defaultLabel;
+      button.classList.toggle("is-active", isActive);
+    }
+
+    function resetActiveSpeakButton() {
+      if (!(activeSpeakButton instanceof HTMLButtonElement)) {
+        activeSpeakButton = null;
+        return;
+      }
+
+      setVoiceButtonState(activeSpeakButton, false);
+      activeSpeakButton = null;
+    }
+
+    function resetActiveListenButton() {
+      if (!(activeListenButton instanceof HTMLButtonElement)) {
+        activeListenButton = null;
+        return;
+      }
+
+      setVoiceButtonState(activeListenButton, false);
+      activeListenButton = null;
+    }
+
+    function getPreferredVoice(language) {
+      if (!Array.isArray(speechVoices) || speechVoices.length === 0) {
+        return null;
+      }
+
+      const exactMatch = speechVoices.find((voice) => voice.lang === language);
+      if (exactMatch) {
+        return exactMatch;
+      }
+
+      const prefix = language.split("-")[0].toLowerCase();
+      return speechVoices.find((voice) => voice.lang.toLowerCase().startsWith(prefix)) || null;
+    }
+
+    function refreshSpeechVoices() {
+      if (!speechSynthesisApi) {
+        speechVoices = [];
+        return;
+      }
+
+      speechVoices = speechSynthesisApi.getVoices();
+    }
+
+    function stopSpeaking() {
+      if (!speechSynthesisApi) {
+        return;
+      }
+
+      speechSynthesisApi.cancel();
+      resetActiveSpeakButton();
+    }
+
+    function stopListening() {
+      if (!activeRecognition) {
+        return;
+      }
+
+      activeRecognition.stop();
+      setVoiceStatus("音声入力を停止しました。");
+    }
+
+    function describeRecognitionError(errorCode) {
+      if (errorCode === "aborted") {
+        return "";
+      }
+
+      if (errorCode === "audio-capture") {
+        return "マイクが利用できません。";
+      }
+
+      if (errorCode === "not-allowed") {
+        return "マイクの利用が許可されていません。";
+      }
+
+      if (errorCode === "no-speech") {
+        return "音声を検出できませんでした。";
+      }
+
+      if (errorCode === "language-not-supported") {
+        return "この言語では音声入力を利用できません。";
+      }
+
+      return "音声入力に失敗しました。";
+    }
+
+    async function speakText(button, kind) {
+      if (!speechSynthesisApi || typeof SpeechSynthesisUtterance === "undefined") {
+        setError("このブラウザでは読み上げを利用できません。");
+        return;
+      }
+
+      if (activeSpeakButton === button && speechSynthesisApi.speaking) {
+        stopSpeaking();
+        setVoiceStatus("読み上げを停止しました。");
+        return;
+      }
+
+      const text = getCopyText(kind);
+      if (!text) {
+        setError("読み上げる内容がありません。");
+        return;
+      }
+
+      setError("");
+      stopSpeaking();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      const language = getSpeechLanguage(kind);
+      const preferredVoice = getPreferredVoice(language);
+
+      utterance.lang = language;
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+
+      utterance.onstart = () => {
+        activeSpeakButton = button;
+        setVoiceButtonState(button, true);
+        setVoiceStatus("読み上げ中です。");
+      };
+
+      utterance.onend = () => {
+        resetActiveSpeakButton();
+        setVoiceStatus("読み上げが完了しました。");
+      };
+
+      utterance.onerror = () => {
+        resetActiveSpeakButton();
+        setError("読み上げに失敗しました。");
+      };
+
+      speechSynthesisApi.speak(utterance);
+    }
+
+    function startListening(button) {
+      if (!SpeechRecognitionClass) {
+        setError("このブラウザでは音声入力を利用できません。");
+        return;
+      }
+
+      if (activeListenButton === button && activeRecognition) {
+        stopListening();
+        return;
+      }
+
+      if (activeRecognition) {
+        activeRecognition.abort();
+      }
+
+      const recognition = new SpeechRecognitionClass();
+      recognition.lang = getSpeechLanguage("source");
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        activeRecognition = recognition;
+        activeListenButton = button;
+        setVoiceButtonState(button, true);
+        setError("");
+        setVoiceStatus("音声入力を開始しました。話してください。");
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = "";
+
+        for (let index = 0; index < event.results.length; index += 1) {
+          transcript += event.results[index][0]?.transcript || "";
+        }
+
+        sourceText.value = transcript.trim();
+
+        if (transcript.trim()) {
+          setVoiceStatus("音声をテキストに反映しました。");
+        }
+      };
+
+      recognition.onerror = (event) => {
+        const message = describeRecognitionError(event.error);
+        if (message) {
+          setError(message);
+        }
+      };
+
+      recognition.onend = () => {
+        activeRecognition = null;
+        resetActiveListenButton();
+      };
+
+      recognition.start();
+    }
+
+    function setupVoiceControls() {
+      const canSpeak =
+        Boolean(speechSynthesisApi) && typeof SpeechSynthesisUtterance !== "undefined";
+      const canListen = typeof SpeechRecognitionClass === "function";
+
+      setVoiceStatus("");
+
+      for (const button of speakButtons) {
+        if (button instanceof HTMLButtonElement) {
+          button.disabled = !canSpeak;
+        }
+      }
+
+      for (const button of listenButtons) {
+        if (button instanceof HTMLButtonElement) {
+          button.disabled = !canListen;
+        }
+      }
+
+      if (!canSpeak && !canListen) {
+        setVoiceStatus("このブラウザでは音声機能を利用できません。");
+        return;
+      }
+
+      if (!canSpeak) {
+        setVoiceStatus("このブラウザでは読み上げを利用できません。");
+        return;
+      }
+
+      if (!canListen) {
+        setVoiceStatus("このブラウザでは音声入力を利用できません。");
+      }
     }
 
     async function writeClipboard(text) {
@@ -155,11 +415,45 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       const currentSource = sourceLang.value;
       sourceLang.value = targetLang.value;
       targetLang.value = currentSource;
+      stopSpeaking();
+      if (activeRecognition) {
+        activeRecognition.abort();
+      }
+      setupVoiceControls();
+    });
+
+    form.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      const voiceButton = target.closest('[data-voice-action="speak"], [data-voice-action="listen"]');
+      if (!(voiceButton instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      if (voiceButton.dataset.voiceAction === "speak") {
+        const speakKind = voiceButton.dataset.speakKind || "";
+        await speakText(voiceButton, speakKind);
+        return;
+      }
+
+      if (voiceButton.dataset.voiceAction === "listen") {
+        startListening(voiceButton);
+      }
     });
 
     resultCard.addEventListener("click", async (event) => {
       const target = event.target;
       if (!(target instanceof Element)) {
+        return;
+      }
+
+      const voiceButton = target.closest('[data-voice-action="speak"]');
+      if (voiceButton instanceof HTMLButtonElement) {
+        const speakKind = voiceButton.dataset.speakKind || "";
+        await speakText(voiceButton, speakKind);
         return;
       }
 
@@ -203,6 +497,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       };
 
       setLoading(true);
+      stopSpeaking();
+      if (activeRecognition) {
+        activeRecognition.abort();
+      }
       resultCard.classList.add("is-hidden");
 
       try {
@@ -221,5 +519,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         setLoading(false);
       }
     });
+
+    refreshSpeechVoices();
+    if (speechSynthesisApi) {
+      speechSynthesisApi.onvoiceschanged = refreshSpeechVoices;
+    }
+    setupVoiceControls();
   </script>
 </BaseLayout>

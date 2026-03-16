@@ -3,7 +3,7 @@
 ベトナム語↔日本語に特化した、シンプルな翻訳MVPです。  
 トップページでそのまま翻訳でき、言い換え・ニュアンス・返信例まで確認できます。
 
-音声入力に対応しました。マイクアイコンをタップして話しかけると、翻訳テキストエリアに自動で入力されます。
+入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
 
 ## Stack
 
@@ -252,6 +252,10 @@ curl -s -X POST http://localhost:4321/api/reply \
 
 ## Troubleshooting
 
+- 音声入力ボタンが無効になっている
+  - `SpeechRecognition` / `webkitSpeechRecognition` が必要です。主に Chrome 系ブラウザで利用できます。
+- 読み上げが期待した声で再生されない
+  - 利用できる音声はブラウザと OS に依存します。日本語は `ja-JP`、ベトナム語は `vi-VN` を優先して選択します。
 - `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
   - `.env` に `OPENAI_API_KEY` が設定されているか確認してください。
 - MiniMax を `openai` provider で使いたい
