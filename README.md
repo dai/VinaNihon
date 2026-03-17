@@ -5,6 +5,8 @@
 
 入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
 
+![alt text](image.png)
+
 ## Stack
 
 - Astro + TypeScript
