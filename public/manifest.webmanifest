@@ -1,0 +1,17 @@
+{
+  "name": "VinaNihon",
+  "short_name": "VinaNihon",
+  "description": "ベトナム語↔日本語を自然に翻訳するシンプルなツール",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#da251d",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
