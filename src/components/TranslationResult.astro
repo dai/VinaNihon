@@ -1,13 +1,17 @@
-<section id="translationResult" class="card result-card is-hidden" aria-live="polite">
-  <h2 class="result-title">翻訳結果</h2>
+<section
+  id="translationResult"
+  class="surface-card is-hidden rounded-3xl border border-border/70 bg-card/85 p-5 shadow-[0_20px_52px_oklch(0.2_0.03_255_/_0.16)] backdrop-blur-md sm:p-7"
+  aria-live="polite"
+>
+  <h2 class="text-xl font-semibold tracking-tight sm:text-2xl">翻訳結果</h2>
 
-  <section class="result-section">
-    <div class="result-section-head">
-      <h3>主翻訳</h3>
-      <div class="action-group">
+  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
+    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="text-base font-semibold">主翻訳</h3>
+      <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button"
+          class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="main"
           data-default-label="読み上げ"
@@ -15,21 +19,21 @@
         >
           読み上げ
         </button>
-        <button type="button" class="copy-button" data-copy-kind="main" aria-label="主翻訳をコピー">
+        <button type="button" class="copy-button action-button" data-copy-kind="main" aria-label="主翻訳をコピー">
           コピー
         </button>
       </div>
     </div>
-    <p id="mainTranslation" class="main-translation"></p>
+    <p id="mainTranslation" class="main-translation whitespace-pre-wrap text-sm leading-relaxed sm:text-base"></p>
   </section>
 
-  <section class="result-section">
-    <div class="result-section-head">
-      <h3>言い換え候補</h3>
-      <div class="action-group">
+  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
+    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="text-base font-semibold">言い換え候補</h3>
+      <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button"
+          class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="alternatives"
           data-default-label="読み上げ"
@@ -37,21 +41,26 @@
         >
           読み上げ
         </button>
-        <button type="button" class="copy-button" data-copy-kind="alternatives" aria-label="言い換え候補をコピー">
+        <button
+          type="button"
+          class="copy-button action-button"
+          data-copy-kind="alternatives"
+          aria-label="言い換え候補をコピー"
+        >
           コピー
         </button>
       </div>
     </div>
-    <ul id="alternativesList" class="result-list"></ul>
+    <ul id="alternativesList" class="result-list grid gap-2 pl-5 text-sm leading-relaxed sm:text-base"></ul>
   </section>
 
-  <section class="result-section">
-    <div class="result-section-head">
-      <h3>ニュアンスメモ</h3>
-      <div class="action-group">
+  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
+    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="text-base font-semibold">ニュアンスメモ</h3>
+      <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button"
+          class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="nuance"
           data-default-label="読み上げ"
@@ -59,21 +68,21 @@
         >
           読み上げ
         </button>
-        <button type="button" class="copy-button" data-copy-kind="nuance" aria-label="ニュアンスメモをコピー">
+        <button type="button" class="copy-button action-button" data-copy-kind="nuance" aria-label="ニュアンスメモをコピー">
           コピー
         </button>
       </div>
     </div>
-    <ul id="nuanceNotesList" class="result-list"></ul>
+    <ul id="nuanceNotesList" class="result-list grid gap-2 pl-5 text-sm leading-relaxed sm:text-base"></ul>
   </section>
 
-  <section class="result-section">
-    <div class="result-section-head">
-      <h3>返信例</h3>
-      <div class="action-group">
+  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
+    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h3 class="text-base font-semibold">返信例</h3>
+      <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button"
+          class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="replies"
           data-default-label="読み上げ"
@@ -81,11 +90,11 @@
         >
           読み上げ
         </button>
-        <button type="button" class="copy-button" data-copy-kind="replies" aria-label="返信例をコピー">
+        <button type="button" class="copy-button action-button" data-copy-kind="replies" aria-label="返信例をコピー">
           コピー
         </button>
       </div>
     </div>
-    <ul id="suggestedRepliesList" class="result-list"></ul>
+    <ul id="suggestedRepliesList" class="result-list grid gap-2 pl-5 text-sm leading-relaxed sm:text-base"></ul>
   </section>
 </section>

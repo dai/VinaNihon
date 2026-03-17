@@ -5,16 +5,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="VinaNihon" description="ベトナム語↔日本語を自然に翻訳するシンプルなツール">
-  <main class="app-shell">
+  <main class="mx-auto grid w-full max-w-5xl gap-5 px-4 py-8 sm:px-6 lg:py-10">
     <TranslatorForm />
     <TranslationResult />
   </main>
-  <footer class="site-footer">
+  <footer class="mx-auto mb-8 w-full max-w-5xl px-4 text-center text-sm text-muted-foreground sm:px-6">
     作成者 GitHub:
-    <a href="https://github.com/dai" target="_blank" rel="noopener noreferrer">dai</a>
+    <a href="https://github.com/dai" target="_blank" rel="noopener noreferrer" class="text-primary underline decoration-primary/50 decoration-1 underline-offset-2 transition hover:text-accent">dai</a>
     /
     &#x1d54f;:
-    <a href="https://x.com/daisuke" target="_blank" rel="noopener noreferrer">@daisuke</a>
+    <a href="https://x.com/daisuke" target="_blank" rel="noopener noreferrer" class="text-primary underline decoration-primary/50 decoration-1 underline-offset-2 transition hover:text-accent">@daisuke</a>
   </footer>
 
   <script is:inline>
