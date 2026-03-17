@@ -1,4 +1,9 @@
 ---
+import "@fontsource/geist-sans/400.css";
+import "@fontsource/geist-sans/600.css";
+import "@fontsource/geist-sans/700.css";
+import "@fontsource/geist-mono/400.css";
+import "@fontsource/geist-mono/500.css";
 import "../styles/global.css";
 
 interface Props {
@@ -22,10 +27,11 @@ const {
     <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#da251d" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8f7fc" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e141f" />
     <title>{title}</title>
   </head>
-  <body>
+  <body class="min-h-dvh">
     <slot />
   </body>
 </html>
