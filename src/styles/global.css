@@ -172,6 +172,13 @@ textarea:focus-visible,
   font-size: 0.9rem;
 }
 
+.voice-status {
+  min-height: 1.2em;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .form-error {
   margin: 6px 0 0;
   color: var(--error);
@@ -202,7 +209,15 @@ textarea:focus-visible,
   margin-bottom: 6px;
 }
 
-.copy-button {
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.copy-button,
+.voice-button {
   border: 1px solid var(--border);
   border-radius: 9px;
   background: var(--surface-strong);
@@ -219,9 +234,16 @@ textarea:focus-visible,
   color: var(--primary);
 }
 
-.copy-button.is-copied {
+.copy-button.is-copied,
+.voice-button:hover:enabled,
+.voice-button.is-active {
   border-color: var(--primary);
   color: var(--primary);
+}
+
+.voice-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .main-translation {

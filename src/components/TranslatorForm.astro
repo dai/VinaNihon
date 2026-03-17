@@ -36,6 +36,28 @@
       placeholder="ここに文章を入力してください"
       required
     ></textarea>
+    <div class="field-actions">
+      <button
+        type="button"
+        class="voice-button"
+        data-voice-action="speak"
+        data-speak-kind="source"
+        data-default-label="読み上げ"
+        aria-label="入力文を読み上げる"
+      >
+        読み上げ
+      </button>
+      <button
+        type="button"
+        class="voice-button"
+        id="sourceListenButton"
+        data-voice-action="listen"
+        data-default-label="音声入力"
+        aria-label="音声入力を開始する"
+      >
+        音声入力
+      </button>
+    </div>
   </label>
 
   <div class="field-row">
@@ -61,5 +83,6 @@
 
   <button type="submit" class="submit-button" id="translateSubmit">翻訳する</button>
   <p id="formStatus" class="form-status" aria-live="polite"></p>
+  <p id="voiceStatus" class="voice-status" aria-live="polite"></p>
   <p id="formError" class="form-error" role="alert" hidden></p>
 </form>
