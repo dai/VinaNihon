@@ -353,6 +353,18 @@ html[data-theme="dark"] {
     gap: 0.55rem;
   }
 
+  .details-trigger-row {
+    margin-top: 0.9rem;
+    display: grid;
+    gap: 0.45rem;
+    justify-items: start;
+  }
+
+  .details-block {
+    display: grid;
+    gap: 0;
+  }
+
   .result-list {
     display: grid;
     gap: 0.45rem;

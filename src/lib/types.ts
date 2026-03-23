@@ -24,12 +24,21 @@ export interface TranslateContext {
 
 export interface TranslateResponse {
   mainTranslation: string;
-  alternatives: string[];
-  nuanceNotes: string[];
   context: TranslateContext;
 }
 
-export interface TranslateWithRepliesResponse extends TranslateResponse {
+export interface TranslationDetailsRequest {
+  sourceLang: Language;
+  targetLang: Language;
+  originalText: string;
+  mainTranslation: string;
+  mode: Mode;
+  tone: Tone;
+}
+
+export interface TranslationDetailsResponse {
+  alternatives: string[];
+  nuanceNotes: string[];
   suggestedReplies: string[];
 }
 

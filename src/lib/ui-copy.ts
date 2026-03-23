@@ -17,6 +17,10 @@ export interface UiCopy {
   submitIdle: string;
   submitLoading: string;
   formStatusLoading: string;
+  loadDetailsIdle: string;
+  loadDetailsLoading: string;
+  detailsStatusLoading: string;
+  detailsStatusReady: string;
   voiceStatusStopped: string;
   voiceStatusReading: string;
   voiceStatusReadDone: string;
@@ -33,6 +37,7 @@ export interface UiCopy {
   errorCopyEmpty: string;
   errorCopyFailed: string;
   errorTranslateFailed: string;
+  errorDetailsFailed: string;
   errorMicUnavailable: string;
   errorMicNotAllowed: string;
   errorNoSpeech: string;
@@ -88,6 +93,10 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     submitIdle: "翻訳する",
     submitLoading: "翻訳中...",
     formStatusLoading: "翻訳しています。しばらくお待ちください。",
+    loadDetailsIdle: "補足を表示",
+    loadDetailsLoading: "補足を読み込み中...",
+    detailsStatusLoading: "補足情報を読み込んでいます。",
+    detailsStatusReady: "補足情報を表示しました。",
     voiceStatusStopped: "音声入力を停止しました。",
     voiceStatusReading: "読み上げ中です。",
     voiceStatusReadDone: "読み上げが完了しました。",
@@ -104,6 +113,7 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     errorCopyEmpty: "コピーする内容がありません。",
     errorCopyFailed: "コピーに失敗しました。",
     errorTranslateFailed: "翻訳処理に失敗しました。",
+    errorDetailsFailed: "補足情報の取得に失敗しました。",
     errorMicUnavailable: "マイクが利用できません。",
     errorMicNotAllowed: "マイクの利用が許可されていません。",
     errorNoSpeech: "音声を検出できませんでした。",
@@ -156,6 +166,10 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     submitIdle: "Dich",
     submitLoading: "Dang dich...",
     formStatusLoading: "Dang xu ly ban dich. Vui long doi.",
+    loadDetailsIdle: "Xem bo sung",
+    loadDetailsLoading: "Dang tai bo sung...",
+    detailsStatusLoading: "Dang tai thong tin bo sung.",
+    detailsStatusReady: "Da hien thong tin bo sung.",
     voiceStatusStopped: "Da dung nhap giong noi.",
     voiceStatusReading: "Dang doc noi dung.",
     voiceStatusReadDone: "Da doc xong.",
@@ -172,6 +186,7 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     errorCopyEmpty: "Khong co noi dung de sao chep.",
     errorCopyFailed: "Sao chep that bai.",
     errorTranslateFailed: "Xu ly ban dich that bai.",
+    errorDetailsFailed: "Tai thong tin bo sung that bai.",
     errorMicUnavailable: "Khong the su dung micro.",
     errorMicNotAllowed: "Micro chua duoc cap quyen.",
     errorNoSpeech: "Khong nhan duoc giong noi.",

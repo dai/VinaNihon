@@ -69,6 +69,9 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
     const resultCard = document.getElementById("translationResult");
     const mainTranslation = document.getElementById("mainTranslation");
+    const detailsContainer = document.getElementById("translationDetails");
+    const loadDetailsButton = document.getElementById("loadDetailsButton");
+    const detailsStatus = document.getElementById("detailsStatus");
     const alternativesList = document.getElementById("alternativesList");
     const nuanceNotesList = document.getElementById("nuanceNotesList");
     const suggestedRepliesList = document.getElementById("suggestedRepliesList");
@@ -92,6 +95,10 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
     let speechVoices = [];
     let currentLocale = defaultLocale;
     let currentTheme = defaultTheme;
+    let detailsLoaded = false;
+    let detailsLoading = false;
+    let lastTranslationRequest = null;
+    let lastMainTranslation = "";
 
     function getUi(locale = currentLocale) {
       return uiCopy[locale] || uiCopy[defaultLocale];
@@ -123,6 +130,47 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
     function setVoiceStatus(message) {
       voiceStatus.textContent = message;
+    }
+
+    function setDetailsStatus(message) {
+      detailsStatus.textContent = message;
+    }
+
+    function clearList(listElement) {
+      listElement.innerHTML = "";
+    }
+
+    function updateDetailsControls() {
+      if (!(loadDetailsButton instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const ui = getUi();
+      loadDetailsButton.hidden = detailsLoaded;
+      loadDetailsButton.disabled = detailsLoading;
+      loadDetailsButton.textContent = detailsLoading ? ui.loadDetailsLoading : ui.loadDetailsIdle;
+
+      if (detailsLoading) {
+        setDetailsStatus(ui.detailsStatusLoading);
+        return;
+      }
+
+      if (detailsLoaded) {
+        setDetailsStatus(ui.detailsStatusReady);
+        return;
+      }
+
+      setDetailsStatus("");
+    }
+
+    function resetDetailsState() {
+      detailsLoaded = false;
+      detailsLoading = false;
+      clearList(alternativesList);
+      clearList(nuanceNotesList);
+      clearList(suggestedRepliesList);
+      detailsContainer.classList.add("is-hidden");
+      updateDetailsControls();
     }
 
     function updateThemeToggle() {
@@ -287,6 +335,7 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       }
 
       updateButtonLabels();
+      updateDetailsControls();
       updateThemeToggle();
 
       if (persistSource && sourceLang instanceof HTMLSelectElement && isLocale(sourceLang.value)) {
@@ -667,11 +716,53 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
     function showResult(translateData) {
       mainTranslation.textContent = translateData.mainTranslation || "";
-      renderList(alternativesList, translateData.alternatives);
-      renderList(nuanceNotesList, translateData.nuanceNotes);
-      renderList(suggestedRepliesList, translateData.suggestedReplies);
-
+      lastMainTranslation = translateData.mainTranslation || "";
+      resetDetailsState();
       resultCard.classList.remove("is-hidden");
+    }
+
+    function showDetails(translationDetails) {
+      renderList(alternativesList, translationDetails.alternatives);
+      renderList(nuanceNotesList, translationDetails.nuanceNotes);
+      renderList(suggestedRepliesList, translationDetails.suggestedReplies);
+
+      detailsLoaded = true;
+      detailsLoading = false;
+      detailsContainer.classList.remove("is-hidden");
+      updateDetailsControls();
+    }
+
+    async function loadTranslationDetails() {
+      if (detailsLoaded || detailsLoading || !lastTranslationRequest || !lastMainTranslation) {
+        return;
+      }
+
+      detailsLoading = true;
+      updateDetailsControls();
+      setError("");
+
+      try {
+        const detailsResponse = await fetch("/api/translate-details", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceLang: lastTranslationRequest.sourceLang,
+            targetLang: lastTranslationRequest.targetLang,
+            originalText: lastTranslationRequest.text,
+            mainTranslation: lastMainTranslation,
+            mode: lastTranslationRequest.mode,
+            tone: lastTranslationRequest.tone
+          })
+        });
+
+        const translationDetails = await parseResponse(detailsResponse);
+        showDetails(translationDetails);
+      } catch (error) {
+        detailsLoading = false;
+        updateDetailsControls();
+        const message = error instanceof Error ? error.message : getUi().errorDetailsFailed;
+        setError(message);
+      }
     }
 
     function syncLocaleWithSource(persist = true) {
@@ -743,6 +834,12 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
         return;
       }
 
+      const detailsButton = target.closest("[data-load-details]");
+      if (detailsButton instanceof HTMLButtonElement) {
+        await loadTranslationDetails();
+        return;
+      }
+
       const voiceButton = target.closest('[data-voice-action="speak"]');
       if (voiceButton instanceof HTMLButtonElement) {
         const speakKind = voiceButton.dataset.speakKind || "";
@@ -794,6 +891,9 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       if (activeRecognition) {
         activeRecognition.abort();
       }
+      lastTranslationRequest = translatePayload;
+      lastMainTranslation = "";
+      resetDetailsState();
       resultCard.classList.add("is-hidden");
 
       try {
@@ -814,6 +914,7 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
     });
 
     restorePreferences();
+    resetDetailsState();
     refreshSpeechVoices();
     if (speechSynthesisApi) {
       speechSynthesisApi.onvoiceschanged = refreshSpeechVoices;

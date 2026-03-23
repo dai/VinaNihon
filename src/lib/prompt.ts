@@ -1,12 +1,24 @@
-import type { ReplyRequest, TranslateRequest } from "./types";
+import type { ReplyRequest, TranslateRequest, TranslationDetailsRequest } from "./types";
 
-export function buildTranslateWithRepliesPrompt(input: TranslateRequest): string {
+export function buildTranslatePrompt(input: TranslateRequest): string {
   return [
     `Translate from ${input.sourceLang} to ${input.targetLang}.`,
     `Mode: ${input.mode}.`,
     `Tone: ${input.tone}.`,
-    "Also generate short suggested replies in the target language.",
+    "Return only the best, concise, natural translation.",
     `Text: ${input.text}`
+  ].join("\n");
+}
+
+export function buildTranslationDetailsPrompt(input: TranslationDetailsRequest): string {
+  return [
+    `Source language: ${input.sourceLang}.`,
+    `Target language: ${input.targetLang}.`,
+    `Mode: ${input.mode}.`,
+    `Tone: ${input.tone}.`,
+    `Original text: ${input.originalText}`,
+    `Main translation: ${input.mainTranslation}`,
+    "Based on the translation above, provide only short alternatives, nuance notes, and brief reply suggestions."
   ].join("\n");
 }
 

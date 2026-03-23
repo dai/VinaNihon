@@ -35,8 +35,20 @@ const ui = UI_COPY.ja;
       </div>
     </div>
     <p id="mainTranslation" class="result-body whitespace-pre-wrap"></p>
+    <div class="details-trigger-row">
+      <button
+        type="button"
+        id="loadDetailsButton"
+        class="action-button"
+        data-load-details
+      >
+        {ui.loadDetailsIdle}
+      </button>
+      <p id="detailsStatus" class="status-line text-sm text-muted-foreground" aria-live="polite"></p>
+    </div>
   </section>
 
+  <div id="translationDetails" class="details-block is-hidden">
   <section class="result-section">
     <div class="result-section-head">
       <h3 class="section-subheading" data-i18n="alternativesHeading">{ui.alternativesHeading}</h3>
@@ -126,4 +138,5 @@ const ui = UI_COPY.ja;
     </div>
     <ul id="suggestedRepliesList" class="result-list result-body"></ul>
   </section>
+  </div>
 </section>

@@ -1,20 +1,24 @@
 import { env as cloudflareEnv } from "cloudflare:workers";
 import {
   buildReplyPrompt,
-  buildTranslateWithRepliesPrompt
+  buildTranslatePrompt,
+  buildTranslationDetailsPrompt
 } from "./prompt";
 import type {
   ReplyRequest,
   ReplyResponse,
   TranslateRequest,
-  TranslateWithRepliesResponse
+  TranslateResponse,
+  TranslationDetailsRequest,
+  TranslationDetailsResponse
 } from "./types";
 
 export type TranslationProviderName = "mock" | "openai";
 export type RuntimeEnv = Record<string, string | undefined> | undefined;
 
 interface TranslationProvider {
-  translate(input: TranslateRequest): Promise<TranslateWithRepliesResponse>;
+  translate(input: TranslateRequest): Promise<TranslateResponse>;
+  translateDetails(input: TranslationDetailsRequest): Promise<TranslationDetailsResponse>;
   suggestReplies(input: ReplyRequest): Promise<ReplyResponse>;
 }
 
@@ -359,10 +363,7 @@ async function callChatCompletionsJson(
   return parsed;
 }
 
-function normalizeTranslateResponse(
-  data: Record<string, unknown>,
-  input: TranslateRequest
-): TranslateWithRepliesResponse {
+function normalizeTranslateResponse(data: Record<string, unknown>, input: TranslateRequest): TranslateResponse {
   const mainTranslation =
     typeof data.mainTranslation === "string" ? data.mainTranslation.trim() : "";
 
@@ -372,15 +373,22 @@ function normalizeTranslateResponse(
 
   return {
     mainTranslation,
-    alternatives: toStringArray(data.alternatives),
-    nuanceNotes: toStringArray(data.nuanceNotes),
-    suggestedReplies: toStringArray(data.suggestedReplies),
     context: {
       sourceLang: input.sourceLang,
       targetLang: input.targetLang,
       mode: input.mode,
       tone: input.tone
     }
+  };
+}
+
+function normalizeTranslationDetailsResponse(
+  data: Record<string, unknown>
+): TranslationDetailsResponse {
+  return {
+    alternatives: toStringArray(data.alternatives),
+    nuanceNotes: toStringArray(data.nuanceNotes),
+    suggestedReplies: toStringArray(data.suggestedReplies)
   };
 }
 
@@ -400,12 +408,22 @@ const TRANSLATE_INSTRUCTIONS = [
   "You are a professional translator focused on Japanese and Vietnamese.",
   "Always output valid JSON.",
   "Return exactly this shape:",
-  '{"mainTranslation":"string","alternatives":["string"],"nuanceNotes":["string"],"suggestedReplies":["string"]}',
+  '{"mainTranslation":"string"}',
   "Rules:",
   "- mainTranslation must be the best natural translation in target language.",
-  "- alternatives should be 2 to 4 useful variants in target language.",
-  "- nuanceNotes should be 1 to 3 short notes explaining tone/context choices.",
-  "- suggestedReplies should be 2 to 4 short practical reply examples in target language."
+  "- Keep it concise and avoid extra explanation."
+].join("\n");
+
+const TRANSLATION_DETAILS_INSTRUCTIONS = [
+  "You provide short follow-up translation details for Japanese and Vietnamese.",
+  "Always output valid JSON.",
+  "Return exactly this shape:",
+  '{"alternatives":["string"],"nuanceNotes":["string"],"suggestedReplies":["string"]}',
+  "Rules:",
+  "- alternatives should be 1 to 2 short useful variants in target language.",
+  "- nuanceNotes should be 1 to 2 short notes only.",
+  "- suggestedReplies should be 1 to 2 short practical reply examples in target language.",
+  "- Keep every item concise."
 ].join("\n");
 
 const REPLY_INSTRUCTIONS = [
@@ -425,22 +443,20 @@ const mockProvider: TranslationProvider = {
 
     return {
       mainTranslation: `[MOCK ${input.sourceLang}->${input.targetLang}] ${cleanedText}`,
-      alternatives: [`別案1: ${cleanedText}`, `別案2: ${cleanedText}`],
-      nuanceNotes: [
-        `${input.mode}モードを想定した表現です。`,
-        `${input.tone}トーンを優先しています。`
-      ],
-      suggestedReplies: [
-        `返信例1: ${cleanedText}`,
-        "返信例2: ありがとうございます。内容を確認します。",
-        "返信例3: 承知しました。よろしくお願いします。"
-      ],
       context: {
         sourceLang: input.sourceLang,
         targetLang: input.targetLang,
         mode: input.mode,
         tone: input.tone
       }
+    };
+  },
+
+  async translateDetails(input) {
+    return {
+      alternatives: [`別案: ${input.mainTranslation}`],
+      nuanceNotes: [`${input.mode}モード向けに簡潔化しています。`],
+      suggestedReplies: ["承知しました。ありがとうございます。"]
     };
   },
 
@@ -470,14 +486,20 @@ function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
 
     return {
       async translate(input) {
-        const prompt = buildTranslateWithRepliesPrompt(input);
+        const prompt = buildTranslatePrompt(input);
+        const data = await callChatCompletionsJson(config, TRANSLATE_INSTRUCTIONS, prompt, "translate");
+        return normalizeTranslateResponse(data, input);
+      },
+
+      async translateDetails(input) {
+        const prompt = buildTranslationDetailsPrompt(input);
         const data = await callChatCompletionsJson(
           config,
-          TRANSLATE_INSTRUCTIONS,
+          TRANSLATION_DETAILS_INSTRUCTIONS,
           prompt,
-          "translate"
+          "translation details"
         );
-        return normalizeTranslateResponse(data, input);
+        return normalizeTranslationDetailsResponse(data);
       },
 
       async suggestReplies(input) {
@@ -497,9 +519,20 @@ function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
 
   return {
     async translate(input) {
-      const prompt = buildTranslateWithRepliesPrompt(input);
+      const prompt = buildTranslatePrompt(input);
       const data = await callCompatibleApiJson(config, TRANSLATE_INSTRUCTIONS, prompt, "translate");
       return normalizeTranslateResponse(data, input);
+    },
+
+    async translateDetails(input) {
+      const prompt = buildTranslationDetailsPrompt(input);
+      const data = await callCompatibleApiJson(
+        config,
+        TRANSLATION_DETAILS_INSTRUCTIONS,
+        prompt,
+        "translation details"
+      );
+      return normalizeTranslationDetailsResponse(data);
     },
 
     async suggestReplies(input) {
@@ -534,11 +567,24 @@ function toProviderError(cause: unknown): TranslationProviderError {
 export async function translateText(
   input: TranslateRequest,
   runtimeEnv?: RuntimeEnv
-): Promise<TranslateWithRepliesResponse> {
+): Promise<TranslateResponse> {
   const provider = createProvider(runtimeEnv);
 
   try {
     return await provider.translate(input);
+  } catch (cause) {
+    throw toProviderError(cause);
+  }
+}
+
+export async function translateDetails(
+  input: TranslationDetailsRequest,
+  runtimeEnv?: RuntimeEnv
+): Promise<TranslationDetailsResponse> {
+  const provider = createProvider(runtimeEnv);
+
+  try {
+    return await provider.translateDetails(input);
   } catch (cause) {
     throw toProviderError(cause);
   }
