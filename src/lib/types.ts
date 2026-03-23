@@ -13,6 +13,8 @@ export interface TranslateRequest {
   text: string;
   mode: Mode;
   tone: Tone;
+  provider?: "mock" | "openai" | "claude";
+  apiKey?: string;
 }
 
 export interface TranslateContext {
@@ -40,6 +42,8 @@ export interface ReplyRequest {
   mainTranslation: string;
   mode: Mode;
   tone: Tone;
+  provider?: "mock" | "openai" | "claude";
+  apiKey?: string;
 }
 
 export interface ReplyResponse {

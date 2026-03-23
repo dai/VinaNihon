@@ -1,4 +1,5 @@
 import { env as cloudflareEnv } from "cloudflare:workers";
+import Anthropic from "@anthropic-ai/sdk";
 import {
   buildReplyPrompt,
   buildTranslateWithRepliesPrompt
@@ -10,7 +11,7 @@ import type {
   TranslateWithRepliesResponse
 } from "./types";
 
-export type TranslationProviderName = "mock" | "openai";
+export type TranslationProviderName = "mock" | "openai" | "claude";
 export type RuntimeEnv = Record<string, string | undefined> | undefined;
 
 interface TranslationProvider {
@@ -20,6 +21,7 @@ interface TranslationProvider {
 
 const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
 const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
+const DEFAULT_CLAUDE_MODEL = "claude-3-5-sonnet-20241022";
 
 interface CompatibleApiConfig {
   apiKey: string;
@@ -69,6 +71,9 @@ function getProviderName(runtimeEnv?: RuntimeEnv): TranslationProviderName {
   if (raw === "openai") {
     return "openai";
   }
+  if (raw === "claude") {
+    return "claude";
+  }
 
   return "mock";
 }
@@ -89,6 +94,21 @@ function getOpenAIApiKey(runtimeEnv?: RuntimeEnv): string {
   if (!apiKey) {
     throw new TranslationProviderError(
       "OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai."
+    );
+  }
+
+  return apiKey;
+}
+
+function getClaudeModel(runtimeEnv?: RuntimeEnv): string {
+  return readServerEnv("CLAUDE_MODEL", runtimeEnv) ?? DEFAULT_CLAUDE_MODEL;
+}
+
+function getClaudeApiKey(runtimeEnv?: RuntimeEnv): string {
+  const apiKey = readServerEnv("ANTHROPIC_API_KEY", runtimeEnv);
+  if (!apiKey) {
+    throw new TranslationProviderError(
+      "ANTHROPIC_API_KEY is required when TRANSLATION_PROVIDER=claude."
     );
   }
 
@@ -510,10 +530,86 @@ function createOpenAIProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
   };
 }
 
+function createClaudeProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
+  const apiKey = getClaudeApiKey(runtimeEnv);
+  const model = getClaudeModel(runtimeEnv);
+
+  const client = new Anthropic({
+    apiKey
+  });
+
+  return {
+    async translate(input) {
+      const prompt = buildTranslateWithRepliesPrompt(input);
+
+      try {
+        const message = await client.messages.create({
+          model,
+          max_tokens: 1024,
+          messages: [
+            {
+              role: "user",
+              content: `${TRANSLATE_INSTRUCTIONS}\n\n${prompt}`
+            }
+          ]
+        });
+
+        const content = message.content[0];
+        if (content.type !== "text") {
+          throw new TranslationProviderError("Claude returned non-text content.");
+        }
+
+        const outputText = stripStructuredNoise(content.text);
+        const data = parseJsonObject(outputText);
+        return normalizeTranslateResponse(data, input);
+      } catch (cause) {
+        if (cause instanceof TranslationProviderError) {
+          throw cause;
+        }
+        throw new TranslationProviderError("Claude API request failed.", cause);
+      }
+    },
+
+    async suggestReplies(input) {
+      const prompt = buildReplyPrompt(input);
+
+      try {
+        const message = await client.messages.create({
+          model,
+          max_tokens: 512,
+          messages: [
+            {
+              role: "user",
+              content: `${REPLY_INSTRUCTIONS}\n\n${prompt}`
+            }
+          ]
+        });
+
+        const content = message.content[0];
+        if (content.type !== "text") {
+          throw new TranslationProviderError("Claude returned non-text content.");
+        }
+
+        const outputText = stripStructuredNoise(content.text);
+        const data = parseJsonObject(outputText);
+        return normalizeReplyResponse(data);
+      } catch (cause) {
+        if (cause instanceof TranslationProviderError) {
+          throw cause;
+        }
+        throw new TranslationProviderError("Claude API request failed.", cause);
+      }
+    }
+  };
+}
+
 function createProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
   const providerName = getProviderName(runtimeEnv);
   if (providerName === "openai") {
     return createOpenAIProvider(runtimeEnv);
+  }
+  if (providerName === "claude") {
+    return createClaudeProvider(runtimeEnv);
   }
 
   return mockProvider;
@@ -535,6 +631,28 @@ export async function translateText(
   input: TranslateRequest,
   runtimeEnv?: RuntimeEnv
 ): Promise<TranslateWithRepliesResponse> {
+  // Support BYOK: if provider and apiKey are specified in the request, use them
+  if (input.provider && input.apiKey) {
+    const byokEnv = { ...runtimeEnv };
+
+    if (input.provider === "openai") {
+      byokEnv.TRANSLATION_PROVIDER = "openai";
+      byokEnv.OPENAI_API_KEY = input.apiKey;
+    } else if (input.provider === "claude") {
+      byokEnv.TRANSLATION_PROVIDER = "claude";
+      byokEnv.ANTHROPIC_API_KEY = input.apiKey;
+    } else if (input.provider === "mock") {
+      byokEnv.TRANSLATION_PROVIDER = "mock";
+    }
+
+    const provider = createProvider(byokEnv);
+    try {
+      return await provider.translate(input);
+    } catch (cause) {
+      throw toProviderError(cause);
+    }
+  }
+
   const provider = createProvider(runtimeEnv);
 
   try {
@@ -548,6 +666,28 @@ export async function suggestReplies(
   input: ReplyRequest,
   runtimeEnv?: RuntimeEnv
 ): Promise<ReplyResponse> {
+  // Support BYOK: if provider and apiKey are specified in the request, use them
+  if (input.provider && input.apiKey) {
+    const byokEnv = { ...runtimeEnv };
+
+    if (input.provider === "openai") {
+      byokEnv.TRANSLATION_PROVIDER = "openai";
+      byokEnv.OPENAI_API_KEY = input.apiKey;
+    } else if (input.provider === "claude") {
+      byokEnv.TRANSLATION_PROVIDER = "claude";
+      byokEnv.ANTHROPIC_API_KEY = input.apiKey;
+    } else if (input.provider === "mock") {
+      byokEnv.TRANSLATION_PROVIDER = "mock";
+    }
+
+    const provider = createProvider(byokEnv);
+    try {
+      return await provider.suggestReplies(input);
+    } catch (cause) {
+      throw toProviderError(cause);
+    }
+  }
+
   const provider = createProvider(runtimeEnv);
 
   try {
