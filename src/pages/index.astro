@@ -2,22 +2,56 @@
 import TranslatorForm from "../components/TranslatorForm.astro";
 import TranslationResult from "../components/TranslationResult.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  DEFAULT_THEME,
+  DEFAULT_UI_LOCALE,
+  STORAGE_KEYS,
+  THEME_COLORS,
+  UI_COPY
+} from "../lib/ui-copy";
+
+const ui = UI_COPY.ja;
+const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 ---
 
-<BaseLayout title="VinaNihon" description="ベトナム語↔日本語を自然に翻訳するシンプルなツール">
-  <main class="mx-auto grid w-full max-w-5xl gap-5 px-4 py-8 sm:px-6 lg:py-10">
+<BaseLayout title={ui.pageTitle} description={ui.pageDescription}>
+  <main class="page-shell">
     <TranslatorForm />
     <TranslationResult />
   </main>
-  <footer class="mx-auto mb-8 w-full max-w-5xl px-4 text-center text-sm text-muted-foreground sm:px-6">
-    作成者 GitHub:
-    <a href="https://github.com/dai" target="_blank" rel="noopener noreferrer" class="text-primary underline decoration-primary/50 decoration-1 underline-offset-2 transition hover:text-accent">dai</a>
-    /
-    &#x1d54f;:
-    <a href="https://x.com/daisuke" target="_blank" rel="noopener noreferrer" class="text-primary underline decoration-primary/50 decoration-1 underline-offset-2 transition hover:text-accent">@daisuke</a>
+  <footer class="site-footer">
+    <span data-i18n="footerAuthorLabel">{ui.footerAuthorLabel}</span>
+    <a
+      href="https://github.com/dai"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-primary underline decoration-primary/50 decoration-1 underline-offset-2 transition hover:text-accent"
+    >
+      dai
+    </a>
+    <span>/</span>
+    <span data-i18n="footerXLabel">{ui.footerXLabel}</span>
+    <a
+      href="https://x.com/daisuke"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-primary underline decoration-primary/50 decoration-1 underline-offset-2 transition hover:text-accent"
+    >
+      @daisuke
+    </a>
   </footer>
 
-  <script is:inline>
+  <script
+    is:inline
+    define:vars={{
+      defaultLocale: DEFAULT_UI_LOCALE,
+      defaultTheme: DEFAULT_THEME,
+      emptyListValues,
+      storageKeys: STORAGE_KEYS,
+      themeColors: THEME_COLORS,
+      uiCopy: UI_COPY
+    }}
+  >
     const form = document.getElementById("translator-form");
     const sourceLang = document.getElementById("sourceLang");
     const targetLang = document.getElementById("targetLang");
@@ -29,6 +63,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const formStatus = document.getElementById("formStatus");
     const voiceStatus = document.getElementById("voiceStatus");
     const formError = document.getElementById("formError");
+    const themeToggle = document.getElementById("themeToggle");
+    const pageDescription = document.getElementById("page-description");
+    const themeColorMeta = document.getElementById("theme-color-meta");
 
     const resultCard = document.getElementById("translationResult");
     const mainTranslation = document.getElementById("mainTranslation");
@@ -38,6 +75,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const copyTimers = new WeakMap();
     const speakButtons = Array.from(document.querySelectorAll('[data-voice-action="speak"]'));
     const listenButtons = Array.from(document.querySelectorAll('[data-voice-action="listen"]'));
+    const copyButtons = Array.from(document.querySelectorAll(".copy-button"));
+    const i18nNodes = Array.from(document.querySelectorAll("[data-i18n]"));
+    const placeholderNodes = Array.from(document.querySelectorAll("[data-i18n-placeholder]"));
+    const ariaNodes = Array.from(document.querySelectorAll("[data-i18n-aria-label]"));
+    const optionNodes = Array.from(document.querySelectorAll("[data-option-group][data-option-value]"));
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
     const speechSynthesisApi = window.speechSynthesis;
     const speechLanguageMap = {
@@ -48,15 +90,216 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     let activeListenButton = null;
     let activeSpeakButton = null;
     let speechVoices = [];
+    let currentLocale = defaultLocale;
+    let currentTheme = defaultTheme;
+
+    function getUi(locale = currentLocale) {
+      return uiCopy[locale] || uiCopy[defaultLocale];
+    }
+
+    function isTheme(value) {
+      return value === "light" || value === "dark";
+    }
+
+    function isLocale(value) {
+      return value === "ja" || value === "vi";
+    }
+
+    function getStoredValue(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    }
+
+    function setStoredValue(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        return;
+      }
+    }
 
     function setVoiceStatus(message) {
       voiceStatus.textContent = message;
     }
 
+    function updateThemeToggle() {
+      if (!(themeToggle instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const ui = getUi();
+      const nextLabel = currentTheme === "dark" ? ui.themeToggleToLight : ui.themeToggleToDark;
+      const nextAria =
+        currentTheme === "dark" ? ui.themeToggleToLightAria : ui.themeToggleToDarkAria;
+
+      themeToggle.textContent = nextLabel;
+      themeToggle.setAttribute("aria-label", nextAria);
+    }
+
+    function applyTheme(theme, persist = true) {
+      currentTheme = isTheme(theme) ? theme : defaultTheme;
+      document.documentElement.dataset.theme = currentTheme;
+
+      if (themeColorMeta instanceof HTMLMetaElement) {
+        themeColorMeta.content = themeColors[currentTheme] || themeColors[defaultTheme];
+      }
+
+      updateThemeToggle();
+
+      if (persist) {
+        setStoredValue(storageKeys.theme, currentTheme);
+      }
+    }
+
+    function updateButtonLabels() {
+      const ui = getUi();
+
+      for (const button of speakButtons) {
+        if (!(button instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        button.dataset.defaultLabel = ui.speakLabel;
+        if (button.classList.contains("is-active")) {
+          button.textContent = ui.stopLabel;
+          button.setAttribute("aria-label", ui.stopLabel);
+          continue;
+        }
+
+        button.textContent = ui.speakLabel;
+        button.setAttribute("aria-label", ui.speakLabel);
+      }
+
+      for (const button of listenButtons) {
+        if (!(button instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        button.dataset.defaultLabel = ui.listenLabel;
+        if (button.classList.contains("is-active")) {
+          button.textContent = ui.stopLabel;
+          button.setAttribute("aria-label", ui.stopLabel);
+          continue;
+        }
+
+        button.textContent = ui.listenLabel;
+        button.setAttribute("aria-label", ui.listenLabel);
+      }
+
+      for (const button of copyButtons) {
+        if (!(button instanceof HTMLButtonElement)) {
+          continue;
+        }
+
+        if (button.classList.contains("is-copied")) {
+          button.textContent = ui.copiedLabel;
+          button.setAttribute("aria-label", ui.copiedLabel);
+          continue;
+        }
+
+        button.textContent = ui.copyLabel;
+        button.setAttribute("aria-label", ui.copyLabel);
+      }
+    }
+
+    function applyLocale(locale, persistSource = true) {
+      currentLocale = isLocale(locale) ? locale : defaultLocale;
+      const ui = getUi();
+
+      document.documentElement.lang = currentLocale;
+      document.title = ui.pageTitle;
+
+      if (pageDescription instanceof HTMLMetaElement) {
+        pageDescription.content = ui.pageDescription;
+      }
+
+      for (const node of i18nNodes) {
+        if (!(node instanceof HTMLElement)) {
+          continue;
+        }
+
+        const key = node.dataset.i18n;
+        if (!key || !(key in ui)) {
+          continue;
+        }
+
+        node.textContent = ui[key];
+      }
+
+      for (const node of placeholderNodes) {
+        if (
+          !(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) ||
+          !node.dataset.i18nPlaceholder
+        ) {
+          continue;
+        }
+
+        const key = node.dataset.i18nPlaceholder;
+        if (!(key in ui)) {
+          continue;
+        }
+
+        node.placeholder = ui[key];
+      }
+
+      for (const node of ariaNodes) {
+        if (!(node instanceof HTMLElement)) {
+          continue;
+        }
+
+        const key = node.dataset.i18nAriaLabel;
+        if (!key || !(key in ui)) {
+          continue;
+        }
+
+        node.setAttribute("aria-label", ui[key]);
+      }
+
+      for (const node of optionNodes) {
+        if (!(node instanceof HTMLOptionElement)) {
+          continue;
+        }
+
+        const group = node.dataset.optionGroup;
+        const value = node.dataset.optionValue;
+        if (!group || !value) {
+          continue;
+        }
+
+        if (group === "language" && ui.languageOptions[value]) {
+          node.textContent = ui.languageOptions[value];
+        }
+
+        if (group === "mode" && ui.modeOptions[value]) {
+          node.textContent = ui.modeOptions[value];
+        }
+
+        if (group === "tone" && ui.toneOptions[value]) {
+          node.textContent = ui.toneOptions[value];
+        }
+      }
+
+      if (submitButton instanceof HTMLButtonElement && !submitButton.disabled) {
+        submitButton.textContent = ui.submitIdle;
+      }
+
+      updateButtonLabels();
+      updateThemeToggle();
+
+      if (persistSource && sourceLang instanceof HTMLSelectElement && isLocale(sourceLang.value)) {
+        setStoredValue(storageKeys.sourceLang, sourceLang.value);
+      }
+    }
+
     function setLoading(isLoading) {
+      const ui = getUi();
+
       submitButton.disabled = isLoading;
-      submitButton.textContent = isLoading ? "翻訳中..." : "翻訳する";
-      formStatus.textContent = isLoading ? "翻訳しています。しばらくお待ちください。" : "";
+      submitButton.textContent = isLoading ? ui.submitLoading : ui.submitIdle;
+      formStatus.textContent = isLoading ? ui.formStatusLoading : "";
     }
 
     function setError(message) {
@@ -75,7 +318,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
       if (!Array.isArray(values) || values.length === 0) {
         const emptyItem = document.createElement("li");
-        emptyItem.textContent = "なし";
+        emptyItem.textContent = getUi().emptyList;
         listElement.appendChild(emptyItem);
         return;
       }
@@ -91,7 +334,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       const items = Array.from(listElement.querySelectorAll("li"));
       return items
         .map((item) => item.textContent?.trim() || "")
-        .filter((value) => value.length > 0 && value !== "なし")
+        .filter((value) => value.length > 0 && !emptyListValues.includes(value))
         .join("\n");
     }
 
@@ -127,8 +370,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
 
     function setVoiceButtonState(button, isActive) {
+      const ui = getUi();
       const defaultLabel = button.dataset.defaultLabel || "";
-      button.textContent = isActive ? "停止" : defaultLabel;
+
+      button.textContent = isActive ? ui.stopLabel : defaultLabel;
+      button.setAttribute("aria-label", isActive ? ui.stopLabel : defaultLabel);
       button.classList.toggle("is-active", isActive);
     }
 
@@ -190,48 +436,52 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       }
 
       activeRecognition.stop();
-      setVoiceStatus("音声入力を停止しました。");
+      setVoiceStatus(getUi().voiceStatusStopped);
     }
 
     function describeRecognitionError(errorCode) {
+      const ui = getUi();
+
       if (errorCode === "aborted") {
         return "";
       }
 
       if (errorCode === "audio-capture") {
-        return "マイクが利用できません。";
+        return ui.errorMicUnavailable;
       }
 
       if (errorCode === "not-allowed") {
-        return "マイクの利用が許可されていません。";
+        return ui.errorMicNotAllowed;
       }
 
       if (errorCode === "no-speech") {
-        return "音声を検出できませんでした。";
+        return ui.errorNoSpeech;
       }
 
       if (errorCode === "language-not-supported") {
-        return "この言語では音声入力を利用できません。";
+        return ui.errorLanguageNotSupported;
       }
 
-      return "音声入力に失敗しました。";
+      return ui.errorListenFailed;
     }
 
     async function speakText(button, kind) {
+      const ui = getUi();
+
       if (!speechSynthesisApi || typeof SpeechSynthesisUtterance === "undefined") {
-        setError("このブラウザでは読み上げを利用できません。");
+        setError(ui.errorSpeechUnsupported);
         return;
       }
 
       if (activeSpeakButton === button && speechSynthesisApi.speaking) {
         stopSpeaking();
-        setVoiceStatus("読み上げを停止しました。");
+        setVoiceStatus(ui.voiceStatusStopped);
         return;
       }
 
       const text = getCopyText(kind);
       if (!text) {
-        setError("読み上げる内容がありません。");
+        setError(ui.errorSpeakEmpty);
         return;
       }
 
@@ -250,25 +500,27 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       utterance.onstart = () => {
         activeSpeakButton = button;
         setVoiceButtonState(button, true);
-        setVoiceStatus("読み上げ中です。");
+        setVoiceStatus(getUi().voiceStatusReading);
       };
 
       utterance.onend = () => {
         resetActiveSpeakButton();
-        setVoiceStatus("読み上げが完了しました。");
+        setVoiceStatus(getUi().voiceStatusReadDone);
       };
 
       utterance.onerror = () => {
         resetActiveSpeakButton();
-        setError("読み上げに失敗しました。");
+        setError(getUi().errorSpeakFailed);
       };
 
       speechSynthesisApi.speak(utterance);
     }
 
     function startListening(button) {
+      const ui = getUi();
+
       if (!SpeechRecognitionClass) {
-        setError("このブラウザでは音声入力を利用できません。");
+        setError(ui.errorListenUnsupported);
         return;
       }
 
@@ -292,7 +544,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         activeListenButton = button;
         setVoiceButtonState(button, true);
         setError("");
-        setVoiceStatus("音声入力を開始しました。話してください。");
+        setVoiceStatus(getUi().voiceStatusListening);
       };
 
       recognition.onresult = (event) => {
@@ -305,7 +557,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         sourceText.value = transcript.trim();
 
         if (transcript.trim()) {
-          setVoiceStatus("音声をテキストに反映しました。");
+          setVoiceStatus(getUi().voiceStatusCaptured);
         }
       };
 
@@ -328,6 +580,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       const canSpeak =
         Boolean(speechSynthesisApi) && typeof SpeechSynthesisUtterance !== "undefined";
       const canListen = typeof SpeechRecognitionClass === "function";
+      const ui = getUi();
 
       setVoiceStatus("");
 
@@ -344,17 +597,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       }
 
       if (!canSpeak && !canListen) {
-        setVoiceStatus("このブラウザでは音声機能を利用できません。");
+        setVoiceStatus(ui.voiceStatusUnsupportedAll);
         return;
       }
 
       if (!canSpeak) {
-        setVoiceStatus("このブラウザでは読み上げを利用できません。");
+        setVoiceStatus(ui.voiceStatusUnsupportedSpeak);
         return;
       }
 
       if (!canListen) {
-        setVoiceStatus("このブラウザでは音声入力を利用できません。");
+        setVoiceStatus(ui.voiceStatusUnsupportedListen);
       }
     }
 
@@ -372,11 +625,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         clearTimeout(previousTimer);
       }
 
-      button.textContent = "コピー済み";
+      const ui = getUi();
+      button.textContent = ui.copiedLabel;
+      button.setAttribute("aria-label", ui.copiedLabel);
       button.classList.add("is-copied");
 
       const nextTimer = setTimeout(() => {
-        button.textContent = "コピー";
+        button.textContent = ui.copyLabel;
+        button.setAttribute("aria-label", ui.copyLabel);
         button.classList.remove("is-copied");
         copyTimers.delete(button);
       }, 1200);
@@ -418,6 +674,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       resultCard.classList.remove("is-hidden");
     }
 
+    function syncLocaleWithSource(persist = true) {
+      const nextLocale = isLocale(sourceLang.value) ? sourceLang.value : defaultLocale;
+      applyLocale(nextLocale, persist);
+    }
+
+    function restorePreferences() {
+      const storedSourceLang = getStoredValue(storageKeys.sourceLang);
+      const storedTheme = getStoredValue(storageKeys.theme);
+
+      if (sourceLang instanceof HTMLSelectElement && isLocale(storedSourceLang)) {
+        sourceLang.value = storedSourceLang;
+        if (targetLang instanceof HTMLSelectElement && targetLang.value === storedSourceLang) {
+          targetLang.value = storedSourceLang === "ja" ? "vi" : "ja";
+        }
+      }
+
+      applyTheme(isTheme(storedTheme) ? storedTheme : defaultTheme, false);
+      syncLocaleWithSource(false);
+    }
+
     swapButton.addEventListener("click", () => {
       const currentSource = sourceLang.value;
       sourceLang.value = targetLang.value;
@@ -426,7 +702,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       if (activeRecognition) {
         activeRecognition.abort();
       }
+      syncLocaleWithSource();
       setupVoiceControls();
+    });
+
+    sourceLang.addEventListener("change", () => {
+      syncLocaleWithSource();
+      setupVoiceControls();
+    });
+
+    themeToggle.addEventListener("click", () => {
+      applyTheme(currentTheme === "dark" ? "light" : "dark");
     });
 
     form.addEventListener("click", async (event) => {
@@ -472,7 +758,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       const copyKind = button.dataset.copyKind || "";
       const copyText = getCopyText(copyKind);
       if (!copyText) {
-        setError("コピーする内容がありません。");
+        setError(getUi().errorCopyEmpty);
         return;
       }
 
@@ -481,7 +767,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         setError("");
         flashCopiedState(button);
       } catch {
-        setError("コピーに失敗しました。");
+        setError(getUi().errorCopyFailed);
       }
     });
 
@@ -491,7 +777,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
       const text = sourceText.value.trim();
       if (!text) {
-        setError("翻訳したい文を入力してください。");
+        setError(getUi().errorInputRequired);
         return;
       }
 
@@ -520,13 +806,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         const translateData = await parseResponse(translateResponse);
         showResult(translateData);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "翻訳処理に失敗しました。";
+        const message = error instanceof Error ? error.message : getUi().errorTranslateFailed;
         setError(message);
       } finally {
         setLoading(false);
       }
     });
 
+    restorePreferences();
     refreshSpeechVoices();
     if (speechSynthesisApi) {
       speechSynthesisApi.onvoiceschanged = refreshSpeechVoices;

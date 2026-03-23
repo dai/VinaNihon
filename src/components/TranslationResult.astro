@@ -1,100 +1,129 @@
-<section
-  id="translationResult"
-  class="surface-card is-hidden rounded-3xl border border-border/70 bg-card/85 p-5 shadow-[0_20px_52px_oklch(0.2_0.03_255_/_0.16)] backdrop-blur-md sm:p-7"
-  aria-live="polite"
->
-  <h2 class="text-xl font-semibold tracking-tight sm:text-2xl">翻訳結果</h2>
+---
+import { UI_COPY } from "../lib/ui-copy";
 
-  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
-    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h3 class="text-base font-semibold">主翻訳</h3>
+const ui = UI_COPY.ja;
+---
+
+<section id="translationResult" class="surface-card panel-card result-card is-hidden" aria-live="polite">
+  <h2 class="section-heading" data-i18n="resultsHeading">{ui.resultsHeading}</h2>
+
+  <section class="result-section">
+    <div class="result-section-head">
+      <h3 class="section-subheading" data-i18n="mainTranslationHeading">{ui.mainTranslationHeading}</h3>
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
           class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="main"
-          data-default-label="読み上げ"
-          aria-label="主翻訳を読み上げる"
+          data-default-label-key="speakLabel"
+          data-default-label={ui.speakLabel}
+          aria-label={ui.speakLabel}
         >
-          読み上げ
+          {ui.speakLabel}
         </button>
-        <button type="button" class="copy-button action-button" data-copy-kind="main" aria-label="主翻訳をコピー">
-          コピー
+        <button
+          type="button"
+          class="copy-button action-button"
+          data-copy-kind="main"
+          data-default-label-key="copyLabel"
+          data-copied-label-key="copiedLabel"
+          aria-label={ui.copyLabel}
+        >
+          {ui.copyLabel}
         </button>
       </div>
     </div>
-    <p id="mainTranslation" class="main-translation whitespace-pre-wrap text-sm leading-relaxed sm:text-base"></p>
+    <p id="mainTranslation" class="result-body whitespace-pre-wrap"></p>
   </section>
 
-  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
-    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h3 class="text-base font-semibold">言い換え候補</h3>
+  <section class="result-section">
+    <div class="result-section-head">
+      <h3 class="section-subheading" data-i18n="alternativesHeading">{ui.alternativesHeading}</h3>
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
           class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="alternatives"
-          data-default-label="読み上げ"
-          aria-label="言い換え候補を読み上げる"
+          data-default-label-key="speakLabel"
+          data-default-label={ui.speakLabel}
+          aria-label={ui.speakLabel}
         >
-          読み上げ
+          {ui.speakLabel}
         </button>
         <button
           type="button"
           class="copy-button action-button"
           data-copy-kind="alternatives"
-          aria-label="言い換え候補をコピー"
+          data-default-label-key="copyLabel"
+          data-copied-label-key="copiedLabel"
+          aria-label={ui.copyLabel}
         >
-          コピー
+          {ui.copyLabel}
         </button>
       </div>
     </div>
-    <ul id="alternativesList" class="result-list grid gap-2 pl-5 text-sm leading-relaxed sm:text-base"></ul>
+    <ul id="alternativesList" class="result-list result-body"></ul>
   </section>
 
-  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
-    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h3 class="text-base font-semibold">ニュアンスメモ</h3>
+  <section class="result-section">
+    <div class="result-section-head">
+      <h3 class="section-subheading" data-i18n="nuanceHeading">{ui.nuanceHeading}</h3>
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
           class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="nuance"
-          data-default-label="読み上げ"
-          aria-label="ニュアンスメモを読み上げる"
+          data-default-label-key="speakLabel"
+          data-default-label={ui.speakLabel}
+          aria-label={ui.speakLabel}
         >
-          読み上げ
+          {ui.speakLabel}
         </button>
-        <button type="button" class="copy-button action-button" data-copy-kind="nuance" aria-label="ニュアンスメモをコピー">
-          コピー
+        <button
+          type="button"
+          class="copy-button action-button"
+          data-copy-kind="nuance"
+          data-default-label-key="copyLabel"
+          data-copied-label-key="copiedLabel"
+          aria-label={ui.copyLabel}
+        >
+          {ui.copyLabel}
         </button>
       </div>
     </div>
-    <ul id="nuanceNotesList" class="result-list grid gap-2 pl-5 text-sm leading-relaxed sm:text-base"></ul>
+    <ul id="nuanceNotesList" class="result-list result-body"></ul>
   </section>
 
-  <section class="result-section mt-4 border-t border-border/70 pt-4 first:mt-0 first:border-t-0 first:pt-0">
-    <div class="result-section-head mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h3 class="text-base font-semibold">返信例</h3>
+  <section class="result-section">
+    <div class="result-section-head">
+      <h3 class="section-subheading" data-i18n="repliesHeading">{ui.repliesHeading}</h3>
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
           class="voice-button action-button"
           data-voice-action="speak"
           data-speak-kind="replies"
-          data-default-label="読み上げ"
-          aria-label="返信例を読み上げる"
+          data-default-label-key="speakLabel"
+          data-default-label={ui.speakLabel}
+          aria-label={ui.speakLabel}
         >
-          読み上げ
+          {ui.speakLabel}
         </button>
-        <button type="button" class="copy-button action-button" data-copy-kind="replies" aria-label="返信例をコピー">
-          コピー
+        <button
+          type="button"
+          class="copy-button action-button"
+          data-copy-kind="replies"
+          data-default-label-key="copyLabel"
+          data-copied-label-key="copiedLabel"
+          aria-label={ui.copyLabel}
+        >
+          {ui.copyLabel}
         </button>
       </div>
     </div>
-    <ul id="suggestedRepliesList" class="result-list grid gap-2 pl-5 text-sm leading-relaxed sm:text-base"></ul>
+    <ul id="suggestedRepliesList" class="result-list result-body"></ul>
   </section>
 </section>

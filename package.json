@@ -17,6 +17,7 @@
     "@fontsource/noto-sans": "^5.2.7",
     "@fontsource/noto-sans-jp": "^5.2.9",
     "@fontsource/noto-serif-jp": "^5.2.8",
+    "@fontsource/parisienne": "^5.2.8",
     "astro": "^6.0.5"
   },
   "devDependencies": {

@@ -1,43 +1,68 @@
-<form
-  id="translator-form"
-  class="surface-card grid gap-5 rounded-3xl border border-border/70 bg-card/85 p-5 shadow-[0_24px_64px_oklch(0.22_0.03_255_/_0.18)] backdrop-blur-md sm:p-7"
-  novalidate
->
-  <header class="grid gap-2">
-    <h1 class="title-heading text-balance text-3xl tracking-tight sm:text-4xl">VinaNihon</h1>
-    <p class="text-sm text-muted-foreground sm:text-base">ベトナム語↔日本語の自然翻訳</p>
+---
+import { UI_COPY } from "../lib/ui-copy";
+
+const ui = UI_COPY.ja;
+---
+
+<form id="translator-form" class="surface-card panel-card translator-card" novalidate>
+  <header class="hero-header">
+    <div class="hero-copy">
+      <h1 class="title-heading text-balance">VinaNihon</h1>
+      <p id="appSubtitle" class="title-subheading text-balance" data-i18n="appSubtitle">{ui.appSubtitle}</p>
+    </div>
+
+    <button
+      type="button"
+      id="themeToggle"
+      class="theme-toggle action-button"
+      data-theme-toggle
+      data-i18n-toggle-light="themeToggleToDark"
+      data-i18n-toggle-dark="themeToggleToLight"
+      data-i18n-aria-light="themeToggleToDarkAria"
+      data-i18n-aria-dark="themeToggleToLightAria"
+      aria-label={ui.themeToggleToDarkAria}
+    >
+      {ui.themeToggleToDark}
+    </button>
   </header>
 
   <div class="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-end">
     <label class="field">
-      <span class="field-label">入力言語</span>
+      <span class="field-label" data-i18n="sourceLangLabel">{ui.sourceLangLabel}</span>
       <select id="sourceLang" name="sourceLang" class="form-control">
-        <option value="ja" selected>日本語🇯🇵</option>
-        <option value="vi">ベトナム語🇻🇳</option>
+        <option value="ja" selected data-option-group="language" data-option-value="ja">{ui.languageOptions.ja}</option>
+        <option value="vi" data-option-group="language" data-option-value="vi">{ui.languageOptions.vi}</option>
       </select>
     </label>
 
-    <button type="button" class="swap-button" id="swapLanguages" aria-label="入力言語と翻訳先言語を入れ替える">
+    <button
+      type="button"
+      class="swap-button"
+      id="swapLanguages"
+      data-i18n-aria-label="swapAriaLabel"
+      aria-label={ui.swapAriaLabel}
+    >
       ⇄
     </button>
 
     <label class="field">
-      <span class="field-label">翻訳先言語</span>
+      <span class="field-label" data-i18n="targetLangLabel">{ui.targetLangLabel}</span>
       <select id="targetLang" name="targetLang" class="form-control">
-        <option value="ja">日本語🇯🇵</option>
-        <option value="vi" selected>ベトナム語🇻🇳</option>
+        <option value="ja" data-option-group="language" data-option-value="ja">{ui.languageOptions.ja}</option>
+        <option value="vi" selected data-option-group="language" data-option-value="vi">{ui.languageOptions.vi}</option>
       </select>
     </label>
   </div>
 
   <label class="field">
-    <span class="field-label">翻訳したい文</span>
+    <span class="field-label" data-i18n="textLabel">{ui.textLabel}</span>
     <textarea
       id="sourceText"
       name="text"
       rows="6"
-      placeholder="ここに文章を入力してください"
-      class="form-control min-h-44 resize-y"
+      placeholder={ui.textPlaceholder}
+      data-i18n-placeholder="textPlaceholder"
+      class="form-control source-textarea"
       required
     ></textarea>
     <div class="mt-2 flex flex-wrap gap-2">
@@ -46,46 +71,58 @@
         class="voice-button action-button"
         data-voice-action="speak"
         data-speak-kind="source"
-        data-default-label="読み上げ"
-        aria-label="入力文を読み上げる"
+        data-default-label-key="speakLabel"
+        data-default-label={ui.speakLabel}
+        aria-label={ui.speakLabel}
       >
-        読み上げ
+        {ui.speakLabel}
       </button>
       <button
         type="button"
         class="voice-button action-button"
         id="sourceListenButton"
         data-voice-action="listen"
-        data-default-label="音声入力"
-        aria-label="音声入力を開始する"
+        data-default-label-key="listenLabel"
+        data-default-label={ui.listenLabel}
+        aria-label={ui.listenLabel}
       >
-        音声入力
+        {ui.listenLabel}
       </button>
     </div>
   </label>
 
   <div class="grid gap-3 sm:grid-cols-2">
     <label class="field">
-      <span class="field-label">モード</span>
+      <span class="field-label" data-i18n="modeLabel">{ui.modeLabel}</span>
       <select id="mode" name="mode" class="form-control">
-        <option value="daily" selected>daily</option>
-        <option value="work">work</option>
-        <option value="customer-service">customer-service</option>
-        <option value="hospital">hospital</option>
+        <option value="daily" selected data-option-group="mode" data-option-value="daily">{ui.modeOptions.daily}</option>
+        <option value="work" data-option-group="mode" data-option-value="work">{ui.modeOptions.work}</option>
+        <option value="customer-service" data-option-group="mode" data-option-value="customer-service">
+          {ui.modeOptions["customer-service"]}
+        </option>
+        <option value="hospital" data-option-group="mode" data-option-value="hospital">{ui.modeOptions.hospital}</option>
       </select>
     </label>
 
     <label class="field">
-      <span class="field-label">トーン</span>
+      <span class="field-label" data-i18n="toneLabel">{ui.toneLabel}</span>
       <select id="tone" name="tone" class="form-control">
-        <option value="casual" selected>casual</option>
-        <option value="normal">normal</option>
-        <option value="polite">polite</option>
+        <option value="casual" selected data-option-group="tone" data-option-value="casual">{ui.toneOptions.casual}</option>
+        <option value="normal" data-option-group="tone" data-option-value="normal">{ui.toneOptions.normal}</option>
+        <option value="polite" data-option-group="tone" data-option-value="polite">{ui.toneOptions.polite}</option>
       </select>
     </label>
   </div>
 
-  <button type="submit" class="submit-button mt-1" id="translateSubmit">翻訳する</button>
+  <button
+    type="submit"
+    class="submit-button mt-1"
+    id="translateSubmit"
+    data-submit-idle-key="submitIdle"
+    data-submit-loading-key="submitLoading"
+  >
+    {ui.submitIdle}
+  </button>
   <p id="formStatus" class="status-line text-sm text-muted-foreground" aria-live="polite"></p>
   <p id="voiceStatus" class="status-line text-sm text-muted-foreground" aria-live="polite"></p>
   <p id="formError" class="status-line text-sm font-medium text-destructive" role="alert" hidden></p>

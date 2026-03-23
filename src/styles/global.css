@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+:root,
+html[data-theme="light"] {
   --background: oklch(0.985 0.008 252);
   --foreground: oklch(0.265 0.026 254);
   --card: oklch(0.998 0.008 252);
@@ -14,34 +15,63 @@
   --accent-foreground: oklch(0.16 0.06 28);
   --destructive: oklch(0.62 0.23 24);
   --ring: oklch(0.72 0.13 236);
-  --surface-shadow: 0 20px 56px oklch(0.22 0.03 255 / 0.15);
+  --surface-shadow: 0 16px 40px oklch(0.22 0.03 255 / 0.15);
   --swap-bg: oklch(0.83 0.16 83);
   --swap-fg: oklch(0.28 0.07 72);
   --swap-border: oklch(0.72 0.15 81);
-  --swap-shadow: 0 14px 34px oklch(0.76 0.14 82 / 0.42);
+  --swap-shadow: 0 12px 28px oklch(0.76 0.14 82 / 0.4);
+  --theme-toggle-bg: oklch(0.95 0.015 248 / 0.92);
+  --theme-toggle-border: oklch(0.84 0.02 250);
+  --theme-toggle-fg: oklch(0.34 0.03 248);
+  --page-max-width: 42rem;
+  --page-gap: clamp(0.875rem, 1.2vw + 0.65rem, 1rem);
+  --page-padding-inline: clamp(0.75rem, 1.5vw + 0.45rem, 1rem);
+  --page-padding-block: clamp(1.4rem, 2.8vw + 0.9rem, 2rem);
+  --panel-padding: clamp(0.95rem, 1.5vw + 0.65rem, 1.2rem);
+  --panel-radius: 1.5rem;
+  --control-min-height: 2.75rem;
+  --control-radius: 1.05rem;
+  --control-padding-inline: 0.85rem;
+  --control-padding-block: 0.65rem;
+  --action-min-height: 2.4rem;
+  --text-body: clamp(0.91rem, 0.3vw + 0.84rem, 0.98rem);
+  --text-small: clamp(0.76rem, 0.2vw + 0.72rem, 0.84rem);
+  --text-title: clamp(2.4rem, 3.2vw + 1.55rem, 3.6rem);
+  --text-subtitle: clamp(1rem, 0.55vw + 0.88rem, 1.18rem);
+  --text-section: clamp(1.22rem, 0.65vw + 1.06rem, 1.5rem);
+  --text-subsection: clamp(0.96rem, 0.4vw + 0.86rem, 1.08rem);
+  --background-gradient:
+    radial-gradient(circle at 10% 0%, oklch(0.86 0.06 241 / 0.35), transparent 33%),
+    radial-gradient(circle at 92% 8%, oklch(0.88 0.08 76 / 0.32), transparent 35%),
+    linear-gradient(165deg, oklch(0.99 0.008 252), oklch(0.96 0.012 246));
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: oklch(0.18 0.02 255);
-    --foreground: oklch(0.95 0.01 250);
-    --card: oklch(0.24 0.018 255);
-    --muted: oklch(0.3 0.015 253);
-    --muted-foreground: oklch(0.78 0.02 250);
-    --border: oklch(0.39 0.02 253);
-    --input: oklch(0.26 0.015 255);
-    --primary: oklch(0.72 0.17 232);
-    --primary-foreground: oklch(0.2 0.025 253);
-    --accent: oklch(0.77 0.18 42);
-    --accent-foreground: oklch(0.2 0.05 38);
-    --destructive: oklch(0.71 0.2 24);
-    --ring: oklch(0.66 0.11 233);
-    --surface-shadow: 0 20px 56px oklch(0.05 0.02 250 / 0.48);
-    --swap-bg: oklch(0.72 0.15 81);
-    --swap-fg: oklch(0.95 0.03 93);
-    --swap-border: oklch(0.82 0.1 90);
-    --swap-shadow: 0 16px 38px oklch(0.72 0.14 82 / 0.32);
-  }
+html[data-theme="dark"] {
+  --background: oklch(0.18 0.02 255);
+  --foreground: oklch(0.95 0.01 250);
+  --card: oklch(0.24 0.018 255);
+  --muted: oklch(0.3 0.015 253);
+  --muted-foreground: oklch(0.78 0.02 250);
+  --border: oklch(0.39 0.02 253);
+  --input: oklch(0.26 0.015 255);
+  --primary: oklch(0.72 0.17 232);
+  --primary-foreground: oklch(0.2 0.025 253);
+  --accent: oklch(0.77 0.18 42);
+  --accent-foreground: oklch(0.2 0.05 38);
+  --destructive: oklch(0.71 0.2 24);
+  --ring: oklch(0.66 0.11 233);
+  --surface-shadow: 0 18px 44px oklch(0.05 0.02 250 / 0.46);
+  --swap-bg: oklch(0.72 0.15 81);
+  --swap-fg: oklch(0.95 0.03 93);
+  --swap-border: oklch(0.82 0.1 90);
+  --swap-shadow: 0 14px 30px oklch(0.72 0.14 82 / 0.3);
+  --theme-toggle-bg: oklch(0.28 0.02 253 / 0.92);
+  --theme-toggle-border: oklch(0.42 0.02 252);
+  --theme-toggle-fg: oklch(0.9 0.02 250);
+  --background-gradient:
+    radial-gradient(circle at 8% 0%, oklch(0.45 0.12 238 / 0.32), transparent 37%),
+    radial-gradient(circle at 92% 10%, oklch(0.5 0.12 75 / 0.26), transparent 34%),
+    linear-gradient(165deg, oklch(0.16 0.02 254), oklch(0.2 0.022 255));
 }
 
 @theme inline {
@@ -53,7 +83,14 @@
     "Hiragino Kaku Gothic ProN",
     "Yu Gothic",
     sans-serif;
-  --font-title: "Noto Serif JP", "Noto Serif CJK JP", "Noto Sans JP", "Noto Sans", serif;
+  --font-title:
+    "Parisienne",
+    "Noto Serif JP",
+    "Noto Serif CJK JP",
+    "Noto Sans JP",
+    "Noto Sans",
+    serif;
+  --font-title-fallback: "Noto Serif JP", "Noto Serif CJK JP", "Noto Sans JP", "Noto Sans", serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -79,27 +116,13 @@
     color-scheme: light;
   }
 
-  @media (prefers-color-scheme: dark) {
-    html {
-      color-scheme: dark;
-    }
+  html[data-theme="dark"] {
+    color-scheme: dark;
   }
 
   body {
     @apply m-0 min-h-dvh bg-background font-sans text-foreground antialiased;
-    background-image:
-      radial-gradient(circle at 10% 0%, oklch(0.86 0.06 241 / 0.35), transparent 33%),
-      radial-gradient(circle at 92% 8%, oklch(0.88 0.08 76 / 0.32), transparent 35%),
-      linear-gradient(165deg, oklch(0.99 0.008 252), oklch(0.96 0.012 246));
-  }
-
-  @media (prefers-color-scheme: dark) {
-    body {
-      background-image:
-        radial-gradient(circle at 8% 0%, oklch(0.45 0.12 238 / 0.32), transparent 37%),
-        radial-gradient(circle at 92% 10%, oklch(0.5 0.12 75 / 0.26), transparent 34%),
-        linear-gradient(165deg, oklch(0.16 0.02 254), oklch(0.2 0.022 255));
-    }
+    background-image: var(--background-gradient);
   }
 
   a {
@@ -115,10 +138,82 @@
 }
 
 @layer components {
+  .page-shell {
+    margin-inline: auto;
+    display: grid;
+    width: 100%;
+    max-width: var(--page-max-width);
+    gap: var(--page-gap);
+    padding-inline: var(--page-padding-inline);
+    padding-block: var(--page-padding-block);
+  }
+
+  .site-footer {
+    margin-inline: auto;
+    margin-bottom: clamp(1.2rem, 2vw, 1.7rem);
+    display: flex;
+    max-width: var(--page-max-width);
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding-inline: var(--page-padding-inline);
+    font-size: var(--text-small);
+    color: var(--muted-foreground);
+  }
+
+  .panel-card {
+    @apply rounded-[var(--panel-radius)] border border-border/70 bg-card/85 backdrop-blur-md;
+    padding: var(--panel-padding);
+  }
+
+  .translator-card,
+  .result-card {
+    box-shadow: var(--surface-shadow);
+  }
+
+  .hero-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+  }
+
+  .hero-copy {
+    display: grid;
+    gap: 0.2rem;
+  }
+
   .title-heading {
     font-family: var(--font-title);
-    font-style: italic;
-    font-weight: 300;
+    font-size: var(--text-title);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+  }
+
+  .title-subheading {
+    font-family: var(--font-title);
+    font-size: var(--text-subtitle);
+    line-height: 1.45;
+    color: var(--muted-foreground);
+  }
+
+  .section-heading {
+    font-family: var(--font-title);
+    font-size: var(--text-section);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .section-subheading {
+    font-family: var(--font-title);
+    font-size: var(--text-subsection);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
   }
 
   .field {
@@ -126,35 +221,68 @@
   }
 
   .field-label {
-    @apply text-sm font-medium text-muted-foreground;
+    font-size: var(--text-small);
+    font-weight: 600;
+    color: var(--muted-foreground);
   }
 
   .form-control {
-    @apply w-full rounded-2xl border border-border bg-input/80 px-3.5 py-2.5 text-foreground shadow-sm transition;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60;
+    @apply w-full border border-border bg-input/80 text-foreground shadow-sm transition;
+    min-height: var(--control-min-height);
+    border-radius: var(--control-radius);
+    padding-inline: var(--control-padding-inline);
+    padding-block: var(--control-padding-block);
+    font-size: var(--text-body);
+    line-height: 1.45;
+  }
+
+  .form-control:focus-visible {
+    @apply outline-none ring-2 ring-ring/60;
+  }
+
+  .source-textarea {
+    min-height: clamp(9.25rem, 24vw, 11rem);
+    resize: vertical;
   }
 
   .status-line {
-    min-height: 1.25rem;
-  }
-
-  .surface-card {
-    box-shadow: var(--surface-shadow);
+    min-height: 1.15rem;
+    font-size: var(--text-small);
   }
 
   .submit-button {
-    @apply w-full rounded-2xl border border-primary/30 bg-gradient-to-r from-primary to-accent px-4 py-3 text-base font-semibold text-primary-foreground transition;
-    @apply hover:translate-y-[-1px] hover:brightness-110;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60;
-    @apply disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0;
+    @apply w-full border border-primary/30 bg-gradient-to-r from-primary to-accent font-semibold text-primary-foreground transition;
+    min-height: var(--control-min-height);
+    border-radius: var(--control-radius);
+    padding-inline: 1rem;
+    padding-block: 0.72rem;
+    font-size: var(--text-body);
+  }
+
+  .submit-button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+
+  .submit-button:focus-visible {
+    @apply outline-none ring-2 ring-ring/60;
+  }
+
+  .submit-button:disabled {
+    @apply cursor-not-allowed opacity-70;
+    transform: none;
   }
 
   .swap-button {
-    @apply inline-flex h-11 w-11 items-center justify-center rounded-2xl border text-lg font-semibold transition;
+    @apply inline-flex items-center justify-center border font-semibold transition;
+    height: var(--control-min-height);
+    width: var(--control-min-height);
+    border-radius: var(--control-radius);
     border-color: var(--swap-border);
     background: var(--swap-bg);
     color: var(--swap-fg);
     box-shadow: var(--swap-shadow);
+    font-size: 1rem;
   }
 
   .swap-button:hover {
@@ -171,10 +299,73 @@
   }
 
   .action-button {
-    @apply rounded-xl border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition;
-    @apply hover:border-primary/70 hover:text-primary;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
-    @apply disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-foreground;
+    @apply border border-border bg-muted text-foreground transition;
+    min-height: var(--action-min-height);
+    border-radius: 0.95rem;
+    padding-inline: 0.82rem;
+    padding-block: 0.42rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .action-button:hover {
+    @apply border-primary/70 text-primary;
+  }
+
+  .action-button:focus-visible {
+    @apply outline-none ring-2 ring-ring/50;
+  }
+
+  .action-button:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+
+  .theme-toggle {
+    background: var(--theme-toggle-bg);
+    border-color: var(--theme-toggle-border);
+    color: var(--theme-toggle-fg);
+    min-width: clamp(6.75rem, 15vw, 7.75rem);
+  }
+
+  .theme-toggle:hover {
+    filter: brightness(1.04);
+  }
+
+  .result-section {
+    margin-top: 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    padding-top: 1rem;
+  }
+
+  .result-section:first-of-type {
+    margin-top: 0.8rem;
+    border-top: 0;
+    padding-top: 0.15rem;
+  }
+
+  .result-section-head {
+    margin-bottom: 0.7rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+  }
+
+  .result-list {
+    display: grid;
+    gap: 0.45rem;
+    padding-left: 1.1rem;
+  }
+
+  .result-body {
+    font-size: var(--text-body);
+    line-height: 1.68;
+  }
+
+  .surface-card {
+    box-shadow: var(--surface-shadow);
   }
 
   .copy-button.is-copied,
