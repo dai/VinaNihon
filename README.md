@@ -1,11 +1,13 @@
 # VinaNihon（ゔぃなにほん）🇯🇵🇻🇳
 
+[Tiếng Việt](README-vi.md)
+
 ベトナム語🇻🇳↔日本語🇯🇵に特化した、シンプルな翻訳MVPです。  
 トップページでそのまま翻訳でき、言い換え・ニュアンス・返信例まで確認できます。
 
 入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
 
-![シンプルな一画面](image.png)
+![VinaNihon translation interface in light mode showing Japanese 日本語 JP on the left input field with a swap button to Vietnamese ベトナム語 VN on the right. The application displays labeled sections for Mode set to casual conversation and Tone set to casual, with a blue-to-orange gradient translate button at the bottom. The interface includes microphone and speaker buttons for audio input and playback functionality](91.jpg) ![VinaNihon translation interface in dark mode with a light background layout, showing the same bidirectional translation setup between Japanese and Vietnamese languages with identical mode and tone controls. The dark theme presents a modern professional appearance with the same interactive buttons and accessibility features](90.jpg)
 
 ## Stack
 
@@ -43,7 +45,7 @@ OpenAI-compatible API を `openai` provider のまま使う場合:
 ```dotenv
 TRANSLATION_PROVIDER=openai
 OPENAI_API_KEY=your_compatible_api_key
-OPENAI_MODEL=MiniMax-M1
+OPENAI_MODEL=MiniMax-M2.5
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
 
@@ -75,7 +77,7 @@ MiniMax を `openai` provider のまま使う場合は次の設定です。
 ```dotenv
 TRANSLATION_PROVIDER=openai
 OPENAI_API_KEY=your_minimax_api_key
-OPENAI_MODEL=MiniMax-M1
+OPENAI_MODEL=MiniMax-M2.5
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
 
@@ -261,7 +263,7 @@ curl -s -X POST http://localhost:4321/api/reply \
 - `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
   - `.env` に `OPENAI_API_KEY` が設定されているか確認してください。
 - MiniMax を `openai` provider で使いたい
-  - `OPENAI_BASE_URL=https://api.minimax.io/v1` と `OPENAI_MODEL=MiniMax-M1` を設定してください。
+  - `OPENAI_BASE_URL=https://api.minimax.io/v1` と `OPENAI_MODEL=MiniMax-M2.5` を設定してください。
 - OpenAI 側エラーで `json_object` 関連メッセージが出る
   - 実装側で `json` 指示を入力に含める対応済みです。古い dev サーバープロセスを停止して再起動してください。
 - `npm run check` で `@rollup/rollup-linux-x64-gnu` 欠落エラー
