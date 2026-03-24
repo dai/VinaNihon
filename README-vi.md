@@ -7,7 +7,7 @@ Bạn có thể dịch trực tiếp ngay trên trang chủ, đồng thời xem 
 
 Phần nhập liệu hỗ trợ nhập giọng nói và đọc văn bản. Mỗi phần trong kết quả dịch cũng hỗ trợ đọc lại.
 
-![Giao diện VinaNihon ở chế độ sáng, hiển thị tiếng Nhật 日本語 JP ở ô nhập bên trái với nút hoán đổi sang tiếng Việt ベトナム語 VN bên phải. Ứng dụng hiển thị các phần được gắn nhãn cho Chế độ đặt thành trò chuyện hàng ngày và Giọng điệu đặt thành bình thường, với nút dịch màu gradient từ xanh sang cam ở dưới cùng. Giao diện bao gồm các nút micro và loa để nhập và phát âm thanh](93.jpg) ![Giao diện VinaNihon ở chế độ tối với bố cục nền sáng, hiển thị cùng thiết lập dịch hai chiều giữa tiếng Nhật và tiếng Việt với các điều khiển chế độ và giọng điệu giống hệt. Chủ đề tối mang lại vẻ ngoài hiện đại và chuyên nghiệp với các nút tương tác và tính năng truy cập giống nhau](92.jpg)
+<img src="93.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng, hiển thị tiếng Nhật 日本語 JP ở ô nhập bên trái với nút hoán đổi sang tiếng Việt ベトナム語 VN bên phải. Ứng dụng hiển thị các phần được gắn nhãn cho Chế độ đặt thành trò chuyện hàng ngày và Giọng điệu đặt thành bình thường, với nút dịch màu gradient từ xanh sang cam ở dưới cùng. Giao diện bao gồm các nút micro và loa để nhập và phát âm thanh"> <img src="92.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối với bố cục nền sáng, hiển thị cùng thiết lập dịch hai chiều giữa tiếng Nhật và tiếng Việt với các điều khiển chế độ và giọng điệu giống hệt. Chủ đề tối mang lại vẻ ngoài hiện đại và chuyên nghiệp với các nút tương tác và tính năng truy cập giống nhau">
 
 ## Stack
 

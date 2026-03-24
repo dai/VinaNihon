@@ -7,7 +7,7 @@
 
 入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
 
-![VinaNihon translation interface in light mode showing Japanese 日本語 JP on the left input field with a swap button to Vietnamese ベトナム語 VN on the right. The application displays labeled sections for Mode set to casual conversation and Tone set to casual, with a blue-to-orange gradient translate button at the bottom. The interface includes microphone and speaker buttons for audio input and playback functionality](91.jpg) ![VinaNihon translation interface in dark mode with a light background layout, showing the same bidirectional translation setup between Japanese and Vietnamese languages with identical mode and tone controls. The dark theme presents a modern professional appearance with the same interactive buttons and accessibility features](90.jpg)
+<img src="91.jpg" width="300" alt="VinaNihon translation interface in light mode showing Japanese 日本語 JP on the left input field with a swap button to Vietnamese ベトナム語 VN on the right. The application displays labeled sections for Mode set to casual conversation and Tone set to casual, with a blue-to-orange gradient translate button at the bottom. The interface includes microphone and speaker buttons for audio input and playback functionality"> <img src="90.jpg" width="300" alt="VinaNihon translation interface in dark mode with a light background layout, showing the same bidirectional translation setup between Japanese and Vietnamese languages with identical mode and tone controls. The dark theme presents a modern professional appearance with the same interactive buttons and accessibility features">
 
 ## Stack
 
