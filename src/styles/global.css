@@ -168,7 +168,8 @@ html[data-theme="dark"] {
   }
 
   .translator-card,
-  .result-card {
+  .result-card,
+  .history-card {
     box-shadow: var(--surface-shadow);
   }
 
@@ -363,6 +364,56 @@ html[data-theme="dark"] {
   .details-block {
     display: grid;
     gap: 0;
+  }
+
+  .history-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .history-empty {
+    margin-top: 0.9rem;
+    color: var(--muted-foreground);
+  }
+
+  .history-list {
+    margin-top: 0.9rem;
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .history-item {
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 1.15rem;
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    padding: 0.95rem;
+  }
+
+  .history-item-head {
+    margin-bottom: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .history-meta {
+    font-size: var(--text-small);
+    color: var(--muted-foreground);
+  }
+
+  .history-grid {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .history-row {
+    display: grid;
+    gap: 0.2rem;
   }
 
   .result-list {

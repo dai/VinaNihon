@@ -6,8 +6,9 @@
 トップページでそのまま翻訳でき、言い換え・ニュアンス・返信例まで確認できます。
 
 入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
+翻訳履歴はブラウザの `localStorage` に最新 20 件まで保存され、入力言語をベトナム語に切り替えると履歴 UI もベトナム語に切り替わります。
 
-<img src="91.jpg" width="300" alt="VinaNihon translation interface in light mode showing Japanese 日本語 JP on the left input field with a swap button to Vietnamese ベトナム語 VN on the right. The application displays labeled sections for Mode set to casual conversation and Tone set to casual, with a blue-to-orange gradient translate button at the bottom. The interface includes microphone and speaker buttons for audio input and playback functionality"> <img src="90.jpg" width="300" alt="VinaNihon translation interface in dark mode with a light background layout, showing the same bidirectional translation setup between Japanese and Vietnamese languages with identical mode and tone controls. The dark theme presents a modern professional appearance with the same interactive buttons and accessibility features">
+<img src="91.jpg" width="300" alt="VinaNihon translation interface in light mode showing Japanese to Vietnamese translation controls, voice input and playback buttons, and a translation history section stored in the browser for reusing recent results"> <img src="90.jpg" width="300" alt="VinaNihon translation interface in dark mode showing the same Japanese and Vietnamese workflow, with localized labels, translation results, and history items that follow the selected input language">
 
 ## Stack
 
@@ -77,9 +78,16 @@ MiniMax を `openai` provider のまま使う場合は次の設定です。
 ```dotenv
 TRANSLATION_PROVIDER=openai
 OPENAI_API_KEY=your_minimax_api_key
-OPENAI_MODEL=MiniMax-M2.5
+OPENAI_MODEL=MiniMax-M2.7
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
+
+## History
+
+- 履歴は各ブラウザの `localStorage` に保存されます
+- 保存対象は原文、主翻訳、言語方向、モード、トーン、作成日時です
+- 最新 20 件まで保持し、各履歴から再入力、個別削除、全件削除ができます
+- 補足情報（言い換え候補、ニュアンスメモ、返信例）は履歴には保存されず、再表示時に必要なら再取得します
 
 ## Environment Variables
 
@@ -89,6 +97,13 @@ For Astro local development, use `.env`.
 - `OPENAI_API_KEY=` (required when `TRANSLATION_PROVIDER=openai`)
 - `OPENAI_MODEL=gpt-4.1-mini` (optional)
 - `OPENAI_BASE_URL=https://api.openai.com/v1` (optional)
+
+MiniMax を使う場合の例:
+
+- `TRANSLATION_PROVIDER=openai`
+- `OPENAI_API_KEY=your_minimax_api_key`
+- `OPENAI_MODEL=MiniMax-M2.7`
+- `OPENAI_BASE_URL=https://api.minimax.io/v1`
 
 For Cloudflare Pages runtime, set the same variables in Pages project settings.
 
@@ -263,7 +278,9 @@ curl -s -X POST http://localhost:4321/api/reply \
 - `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
   - `.env` に `OPENAI_API_KEY` が設定されているか確認してください。
 - MiniMax を `openai` provider で使いたい
-  - `OPENAI_BASE_URL=https://api.minimax.io/v1` と `OPENAI_MODEL=MiniMax-M2.5` を設定してください。
+  - `OPENAI_BASE_URL=https://api.minimax.io/v1` と `OPENAI_MODEL=MiniMax-M2.7` を設定してください。
+- 履歴がブラウザごとに違う
+  - 履歴はサーバー保存ではなく `localStorage` 保存です。別ブラウザやシークレットウィンドウとは共有されません。
 - OpenAI 側エラーで `json_object` 関連メッセージが出る
   - 実装側で `json` 指示を入力に含める対応済みです。古い dev サーバープロセスを停止して再起動してください。
 - `npm run check` で `@rollup/rollup-linux-x64-gnu` 欠落エラー

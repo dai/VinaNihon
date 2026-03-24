@@ -22,6 +22,17 @@ export interface TranslateContext {
   tone: Tone;
 }
 
+export interface HistoryEntry {
+  id: string;
+  sourceLang: Language;
+  targetLang: Language;
+  text: string;
+  mode: Mode;
+  tone: Tone;
+  mainTranslation: string;
+  createdAt: string;
+}
+
 export interface TranslateResponse {
   mainTranslation: string;
   context: TranslateContext;

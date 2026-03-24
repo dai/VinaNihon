@@ -38,6 +38,8 @@ export interface UiCopy {
   errorCopyFailed: string;
   errorTranslateFailed: string;
   errorDetailsFailed: string;
+  errorHistoryLoadFailed: string;
+  errorHistorySaveFailed: string;
   errorMicUnavailable: string;
   errorMicNotAllowed: string;
   errorNoSpeech: string;
@@ -48,6 +50,15 @@ export interface UiCopy {
   alternativesHeading: string;
   nuanceHeading: string;
   repliesHeading: string;
+  historyHeading: string;
+  historyEmpty: string;
+  historyReuse: string;
+  historyDelete: string;
+  historyClearAll: string;
+  historyConfirmClearAll: string;
+  historySourceLabel: string;
+  historyTargetLabel: string;
+  historyCreatedAtLabel: string;
   emptyList: string;
   copyLabel: string;
   copiedLabel: string;
@@ -70,7 +81,8 @@ export const DEFAULT_THEME: ThemeMode = "light";
 
 export const STORAGE_KEYS = {
   sourceLang: "vinanihon-source-lang",
-  theme: "vinanihon-theme"
+  theme: "vinanihon-theme",
+  history: "vinanihon-history"
 } as const;
 
 export const THEME_COLORS: Record<ThemeMode, string> = {
@@ -114,6 +126,8 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     errorCopyFailed: "コピーに失敗しました。",
     errorTranslateFailed: "翻訳処理に失敗しました。",
     errorDetailsFailed: "補足情報の取得に失敗しました。",
+    errorHistoryLoadFailed: "履歴の読み込みに失敗しました。",
+    errorHistorySaveFailed: "履歴の保存に失敗しました。",
     errorMicUnavailable: "マイクが利用できません。",
     errorMicNotAllowed: "マイクの利用が許可されていません。",
     errorNoSpeech: "音声を検出できませんでした。",
@@ -124,6 +138,15 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     alternativesHeading: "言い換え候補",
     nuanceHeading: "ニュアンスメモ",
     repliesHeading: "返信例",
+    historyHeading: "履歴",
+    historyEmpty: "履歴はまだありません。",
+    historyReuse: "再入力",
+    historyDelete: "削除",
+    historyClearAll: "全件削除",
+    historyConfirmClearAll: "履歴をすべて削除しますか？",
+    historySourceLabel: "原文",
+    historyTargetLabel: "主翻訳",
+    historyCreatedAtLabel: "日時",
     emptyList: "なし",
     copyLabel: "コピー",
     copiedLabel: "コピー済み",
@@ -187,6 +210,8 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     errorCopyFailed: "Sao chep that bai.",
     errorTranslateFailed: "Xu ly ban dich that bai.",
     errorDetailsFailed: "Tai thong tin bo sung that bai.",
+    errorHistoryLoadFailed: "Tai lich su that bai.",
+    errorHistorySaveFailed: "Luu lich su that bai.",
     errorMicUnavailable: "Khong the su dung micro.",
     errorMicNotAllowed: "Micro chua duoc cap quyen.",
     errorNoSpeech: "Khong nhan duoc giong noi.",
@@ -197,6 +222,15 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     alternativesHeading: "Cach dien dat khac",
     nuanceHeading: "Ghi chu sac thai",
     repliesHeading: "Goi y phan hoi",
+    historyHeading: "Lich su",
+    historyEmpty: "Chua co lich su.",
+    historyReuse: "Dung lai",
+    historyDelete: "Xoa",
+    historyClearAll: "Xoa tat ca",
+    historyConfirmClearAll: "Ban co muon xoa toan bo lich su khong?",
+    historySourceLabel: "Van ban goc",
+    historyTargetLabel: "Ban dich chinh",
+    historyCreatedAtLabel: "Thoi gian",
     emptyList: "Khong co",
     copyLabel: "Sao chep",
     copiedLabel: "Da sao chep",

@@ -6,8 +6,9 @@
 Bạn có thể dịch trực tiếp ngay trên trang chủ, đồng thời xem các cách diễn đạt khác, sắc thái ý nghĩa và ví dụ trả lời.
 
 Phần nhập liệu hỗ trợ nhập giọng nói và đọc văn bản. Mỗi phần trong kết quả dịch cũng hỗ trợ đọc lại.
+Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 20 mục gần nhất. Khi đổi ngôn ngữ nhập sang tiếng Việt, phần UI của lịch sử cũng đổi sang tiếng Việt.
 
-<img src="93.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng, hiển thị tiếng Nhật 日本語 JP ở ô nhập bên trái với nút hoán đổi sang tiếng Việt ベトナム語 VN bên phải. Ứng dụng hiển thị các phần được gắn nhãn cho Chế độ đặt thành trò chuyện hàng ngày và Giọng điệu đặt thành bình thường, với nút dịch màu gradient từ xanh sang cam ở dưới cùng. Giao diện bao gồm các nút micro và loa để nhập và phát âm thanh"> <img src="92.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối với bố cục nền sáng, hiển thị cùng thiết lập dịch hai chiều giữa tiếng Nhật và tiếng Việt với các điều khiển chế độ và giọng điệu giống hệt. Chủ đề tối mang lại vẻ ngoài hiện đại và chuyên nghiệp với các nút tương tác và tính năng truy cập giống nhau">
+<img src="93.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với điều khiển dịch Nhật-Việt, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch được lưu trong trình duyệt để dùng lại các kết quả gần đây"> <img src="92.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối cho cùng luồng dịch giữa tiếng Nhật và tiếng Việt, với nhãn giao diện và các mục lịch sử tự đổi theo ngôn ngữ nhập đang chọn">
 
 ## Stack
 
@@ -77,9 +78,16 @@ Nếu muốn dùng MiniMax với `openai` provider, dùng cấu hình sau:
 ```dotenv
 TRANSLATION_PROVIDER=openai
 OPENAI_API_KEY=your_minimax_api_key
-OPENAI_MODEL=MiniMax-M2.5
+OPENAI_MODEL=MiniMax-M2.7
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
+
+## Lịch sử
+
+- Lịch sử được lưu trong `localStorage` của từng trình duyệt
+- Dữ liệu lưu gồm văn bản gốc, bản dịch chính, hướng dịch, chế độ, sắc thái và thời gian tạo
+- Giữ tối đa 20 mục mới nhất, hỗ trợ dùng lại, xóa từng mục và xóa toàn bộ
+- Thông tin bổ sung như cách diễn đạt khác, ghi chú sắc thái và gợi ý phản hồi không được lưu trong lịch sử; nếu cần sẽ tải lại sau
 
 ## Biến môi trường
 
@@ -89,6 +97,13 @@ Trong môi trường phát triển Astro cục bộ, dùng `.env`.
 - `OPENAI_API_KEY=` (bắt buộc khi `TRANSLATION_PROVIDER=openai`)
 - `OPENAI_MODEL=gpt-4.1-mini` (tùy chọn)
 - `OPENAI_BASE_URL=https://api.openai.com/v1` (tùy chọn)
+
+Ví dụ khi dùng MiniMax:
+
+- `TRANSLATION_PROVIDER=openai`
+- `OPENAI_API_KEY=your_minimax_api_key`
+- `OPENAI_MODEL=MiniMax-M2.7`
+- `OPENAI_BASE_URL=https://api.minimax.io/v1`
 
 Đối với runtime trên Cloudflare Pages, hãy đặt cùng các biến đó trong phần cài đặt của dự án Pages.
 
@@ -263,7 +278,9 @@ curl -s -X POST http://localhost:4321/api/reply \
 - `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
   - Hãy kiểm tra xem `.env` đã có `OPENAI_API_KEY` hay chưa.
 - Muốn dùng MiniMax bằng `openai` provider
-  - Hãy đặt `OPENAI_BASE_URL=https://api.minimax.io/v1` và `OPENAI_MODEL=MiniMax-M2.5`.
+  - Hãy đặt `OPENAI_BASE_URL=https://api.minimax.io/v1` và `OPENAI_MODEL=MiniMax-M2.7`.
+- Lịch sử khác nhau giữa các trình duyệt
+  - Lịch sử hiện được lưu bằng `localStorage`, nên không tự đồng bộ giữa các trình duyệt hoặc cửa sổ ẩn danh.
 - Xuất hiện lỗi phía OpenAI liên quan đến `json_object`
   - Phần triển khai đã có bổ sung chỉ dẫn `json` trong input. Hãy dừng tiến trình dev server cũ và khởi động lại.
 - `npm run check` báo lỗi thiếu `@rollup/rollup-linux-x64-gnu`
