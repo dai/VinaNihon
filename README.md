@@ -191,15 +191,37 @@ Response:
 ```json
 {
   "mainTranslation": "...",
-  "alternatives": ["..."],
-  "nuanceNotes": ["..."],
-  "suggestedReplies": ["..."],
   "context": {
     "sourceLang": "ja",
     "targetLang": "vi",
     "mode": "daily",
     "tone": "normal"
   }
+}
+```
+
+### `POST /api/translate-details`
+
+Request:
+
+```json
+{
+  "sourceLang": "ja",
+  "targetLang": "vi",
+  "originalText": "こんにちは",
+  "mainTranslation": "Xin chào",
+  "mode": "daily",
+  "tone": "normal"
+}
+```
+
+Response:
+
+```json
+{
+  "alternatives": ["..."],
+  "nuanceNotes": ["..."],
+  "suggestedReplies": ["..."]
 }
 ```
 
@@ -212,7 +234,7 @@ Request:
   "sourceLang": "ja",
   "targetLang": "vi",
   "originalText": "こんにちは",
-  "mainTranslation": "...",
+  "mainTranslation": "Xin chào",
   "mode": "daily",
   "tone": "normal"
 }
@@ -228,7 +250,7 @@ Response:
 
 ## Provider Architecture
 
-`src/lib/translate.ts` provides a service abstraction:
+`src/lib/translate/` provides a service abstraction:
 
 - `mock` provider: always available fallback
 - `openai` provider: calls `POST https://api.openai.com/v1/responses`
