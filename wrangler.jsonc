@@ -23,5 +23,9 @@
 				}
 			]
 		}
+	},
+	"vars": {
+		"DAILY_REQUEST_LIMIT": "300",
+		"ALERT_THRESHOLD": "0.8"
 	}
 }
