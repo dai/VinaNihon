@@ -15,12 +15,7 @@ export interface TranslateRequest {
   tone: Tone;
 }
 
-export interface TranslateContext {
-  sourceLang: Language;
-  targetLang: Language;
-  mode: Mode;
-  tone: Tone;
-}
+export type TranslateContext = Omit<TranslateRequest, "text">;
 
 export interface HistoryEntry {
   id: string;

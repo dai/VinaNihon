@@ -1,41 +1,9 @@
 import type { APIRoute } from "astro";
-import {
-  LANGUAGES,
-  MODES,
-  TONES,
-  type Language,
-  type Mode,
-  type Tone,
-  type TranslationDetailsRequest
-} from "../../lib/types";
+import { isLanguage, isMode, isTone, error, json } from "../../lib/validators";
+import type { TranslationDetailsRequest } from "../../lib/types";
 import { translateDetails } from "../../lib/translate";
 
 export const prerender = false;
-
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8"
-    }
-  });
-}
-
-function error(message: string, status: number): Response {
-  return json({ error: { message } }, status);
-}
-
-function isLanguage(value: unknown): value is Language {
-  return typeof value === "string" && LANGUAGES.includes(value as Language);
-}
-
-function isMode(value: unknown): value is Mode {
-  return typeof value === "string" && MODES.includes(value as Mode);
-}
-
-function isTone(value: unknown): value is Tone {
-  return typeof value === "string" && TONES.includes(value as Tone);
-}
 
 function parseRequestBody(body: unknown): TranslationDetailsRequest | null {
   if (!body || typeof body !== "object") {
@@ -94,9 +62,7 @@ export const POST: APIRoute = async (context) => {
     return json(result, 200);
   } catch (cause) {
     console.error("/api/translate-details failed", cause);
-    const message =
-      cause instanceof Error ? cause.message : "Translation details failed. Please try again.";
-    return error(message, 500);
+    return error("補足情報の取得に失敗しました。しばらく経ってから再度お試しください。", 500);
   }
 };
 
