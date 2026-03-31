@@ -113,10 +113,6 @@ html[data-theme="dark"] {
   --color-ring: var(--ring);
 }
 
-html[lang="vi"] {
-  --font-sans: "Noto Sans", "Noto Sans JP", "Noto Sans CJK JP", sans-serif;
-}
-
 @layer base {
   * {
     @apply border-border;
