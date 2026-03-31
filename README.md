@@ -8,7 +8,7 @@
 入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
 翻訳履歴はブラウザの `localStorage` に最新 20 件まで保存され、入力言語をベトナム語に切り替えると履歴 UI もベトナム語に切り替わります。
 
-<img src="91.jpg" width="300" alt="VinaNihon translation interface in light mode showing Japanese to Vietnamese translation controls, voice input and playback buttons, and a translation history section stored in the browser for reusing recent results"> <img src="90.jpg" width="300" alt="VinaNihon translation interface in dark mode showing the same Japanese and Vietnamese workflow, with localized labels, translation results, and history items that follow the selected input language">
+<img src="114.jpg" width="300" alt="VinaNihon translation interface in light mode showing Japanese to Vietnamese translation controls, voice input and playback buttons, and a translation history section stored in the browser for reusing recent results"> <img src="115.jpg" width="300" alt="VinaNihon translation interface in dark mode showing the same Japanese and Vietnamese workflow, with localized labels, translation results, and history items that follow the selected input language">
 
 ## Stack
 

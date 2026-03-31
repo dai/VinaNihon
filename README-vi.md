@@ -8,7 +8,7 @@ Bạn có thể dịch trực tiếp ngay trên trang chủ, đồng thời xem 
 Phần nhập liệu hỗ trợ nhập giọng nói và đọc văn bản. Mỗi phần trong kết quả dịch cũng hỗ trợ đọc lại.
 Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 20 mục gần nhất. Khi đổi ngôn ngữ nhập sang tiếng Việt, phần UI của lịch sử cũng đổi sang tiếng Việt.
 
-<img src="93.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với điều khiển dịch Nhật-Việt, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch được lưu trong trình duyệt để dùng lại các kết quả gần đây"> <img src="92.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối cho cùng luồng dịch giữa tiếng Nhật và tiếng Việt, với nhãn giao diện và các mục lịch sử tự đổi theo ngôn ngữ nhập đang chọn">
+<img src="112.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với điều khiển dịch Nhật-Việt, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch được lưu trong trình duyệt để dùng lại các kết quả gần đây"> <img src="113.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối cho cùng luồng dịch giữa tiếng Nhật và tiếng Việt, với nhãn giao diện và các mục lịch sử tự đổi theo ngôn ngữ nhập đang chọn">
 
 ## Stack
 
