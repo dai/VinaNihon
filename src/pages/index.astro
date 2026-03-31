@@ -376,7 +376,11 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       renderHistory(historyList);
 
       if (persist) {
-        setStoredValue(storageKeys.sourceLang, currentLocale);
+        fetch("/api/session-locale", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uiLocale: currentLocale })
+        }).catch(() => {});
       }
     }
 
@@ -1050,9 +1054,6 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       }
 
       applyTheme(isTheme(storedTheme) ? storedTheme : defaultTheme, false);
-      if (isLocale(storedSourceLang)) {
-        applyLocale(storedSourceLang, false);
-      }
     }
 
     swapButton.addEventListener("click", () => {
@@ -1063,10 +1064,16 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       if (activeRecognition) {
         activeRecognition.abort();
       }
+      if (sourceLang instanceof HTMLSelectElement && isLocale(sourceLang.value)) {
+        setStoredValue(storageKeys.sourceLang, sourceLang.value);
+      }
       setupVoiceControls();
     });
 
     sourceLang.addEventListener("change", () => {
+      if (sourceLang instanceof HTMLSelectElement && isLocale(sourceLang.value)) {
+        setStoredValue(storageKeys.sourceLang, sourceLang.value);
+      }
       setupVoiceControls();
     });
 

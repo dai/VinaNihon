@@ -49,34 +49,52 @@ const {
       (() => {
         const root = document.documentElement;
         const storageThemeKey = storageKeys.theme;
-        const storageSourceLangKey = storageKeys.sourceLang;
 
         let nextTheme = defaultTheme;
-        let nextLang = "ja";
 
         try {
           const storedTheme = localStorage.getItem(storageThemeKey);
           if (storedTheme === "dark" || storedTheme === "light") {
             nextTheme = storedTheme;
           }
-
-          const storedSourceLang = localStorage.getItem(storageSourceLangKey);
-          if (storedSourceLang === "vi") {
-            nextLang = "vi";
-          }
         } catch {
           nextTheme = defaultTheme;
-          nextLang = "ja";
         }
 
         root.dataset.theme = nextTheme;
-        root.lang = nextLang;
 
         const themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (themeColorMeta instanceof HTMLMetaElement) {
           themeColorMeta.content = themeColors[nextTheme] || themeColors.light;
         }
+
+        // Fetch initial UI locale from session API
+        fetch("/api/session-locale")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.uiLocale === "ja" || data.uiLocale === "vi") {
+              root.lang = data.uiLocale;
+              updateLocaleToggleInitial(data.uiLocale);
+            }
+          })
+          .catch(() => {
+            root.lang = "ja";
+            updateLocaleToggleInitial("ja");
+          });
       })();
+
+      function updateLocaleToggleInitial(locale) {
+        const localeToggle = document.getElementById("localeToggle");
+        if (!localeToggle) return;
+        const jaBtn = localeToggle.querySelector('[data-locale="ja"]');
+        const viBtn = localeToggle.querySelector('[data-locale="vi"]');
+        if (jaBtn instanceof HTMLButtonElement) {
+          jaBtn.setAttribute("aria-pressed", locale === "ja" ? "true" : "false");
+        }
+        if (viBtn instanceof HTMLButtonElement) {
+          viBtn.setAttribute("aria-pressed", locale === "vi" ? "true" : "false");
+        }
+      }
     </script>
   </head>
   <body class="min-h-dvh">
