@@ -66,6 +66,7 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
     const voiceStatus = document.getElementById("voiceStatus");
     const formError = document.getElementById("formError");
     const themeToggle = document.getElementById("themeToggle");
+    const localeToggle = document.getElementById("localeToggle");
     const pageDescription = document.getElementById("page-description");
     const themeColorMeta = document.getElementById("theme-color-meta");
 
@@ -207,6 +208,20 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       themeToggle.setAttribute("aria-label", nextAria);
     }
 
+    function updateLocaleToggle() {
+      if (!(localeToggle instanceof HTMLElement)) {
+        return;
+      }
+      const jaBtn = localeToggle.querySelector('[data-locale="ja"]');
+      const viBtn = localeToggle.querySelector('[data-locale="vi"]');
+      if (jaBtn instanceof HTMLButtonElement) {
+        jaBtn.setAttribute("aria-pressed", currentLocale === "ja" ? "true" : "false");
+      }
+      if (viBtn instanceof HTMLButtonElement) {
+        viBtn.setAttribute("aria-pressed", currentLocale === "vi" ? "true" : "false");
+      }
+    }
+
     function applyTheme(theme, persist = true) {
       currentTheme = isTheme(theme) ? theme : defaultTheme;
       document.documentElement.dataset.theme = currentTheme;
@@ -273,7 +288,7 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       }
     }
 
-    function applyLocale(locale, persistSource = true) {
+    function applyLocale(locale, persist = true) {
       currentLocale = isLocale(locale) ? locale : defaultLocale;
       const ui = getUi();
 
@@ -357,10 +372,11 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       updateButtonLabels();
       updateDetailsControls();
       updateThemeToggle();
+      updateLocaleToggle();
       renderHistory(historyList);
 
-      if (persistSource && sourceLang instanceof HTMLSelectElement && isLocale(sourceLang.value)) {
-        setStoredValue(storageKeys.sourceLang, sourceLang.value);
+      if (persist) {
+        setStoredValue(storageKeys.sourceLang, currentLocale);
       }
     }
 
@@ -1034,7 +1050,9 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       }
 
       applyTheme(isTheme(storedTheme) ? storedTheme : defaultTheme, false);
-      syncLocaleWithSource(false);
+      if (isLocale(storedSourceLang)) {
+        applyLocale(storedSourceLang, false);
+      }
     }
 
     swapButton.addEventListener("click", () => {
@@ -1045,17 +1063,23 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       if (activeRecognition) {
         activeRecognition.abort();
       }
-      syncLocaleWithSource();
       setupVoiceControls();
     });
 
     sourceLang.addEventListener("change", () => {
-      syncLocaleWithSource();
       setupVoiceControls();
     });
 
     themeToggle.addEventListener("click", () => {
       applyTheme(currentTheme === "dark" ? "light" : "dark");
+    });
+
+    localeToggle.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement) || !target.dataset.locale) {
+        return;
+      }
+      applyLocale(target.dataset.locale, true);
     });
 
     form.addEventListener("click", async (event) => {

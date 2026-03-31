@@ -80,6 +80,12 @@ const {
     </script>
   </head>
   <body class="min-h-dvh">
+    <div class="locale-toggle-container">
+      <div id="localeToggle" class="locale-toggle" role="group" aria-label="UI Language">
+        <button type="button" class="locale-toggle-segment" data-locale="ja" aria-pressed="true">日本語</button>
+        <button type="button" class="locale-toggle-segment" data-locale="vi" aria-pressed="false">ベトナム語</button>
+      </div>
+    </div>
     <slot />
   </body>
 </html>

@@ -23,6 +23,9 @@ html[data-theme="light"] {
   --theme-toggle-bg: oklch(0.95 0.015 248 / 0.92);
   --theme-toggle-border: oklch(0.84 0.02 250);
   --theme-toggle-fg: oklch(0.34 0.03 248);
+  --locale-toggle-bg: oklch(0.95 0.015 248 / 0.92);
+  --locale-toggle-border: oklch(0.84 0.02 250);
+  --locale-toggle-fg: oklch(0.34 0.03 248);
   --page-max-width: 42rem;
   --page-gap: clamp(0.875rem, 1.2vw + 0.65rem, 1rem);
   --page-padding-inline: clamp(0.75rem, 1.5vw + 0.45rem, 1rem);
@@ -68,6 +71,9 @@ html[data-theme="dark"] {
   --theme-toggle-bg: oklch(0.28 0.02 253 / 0.92);
   --theme-toggle-border: oklch(0.42 0.02 252);
   --theme-toggle-fg: oklch(0.9 0.02 250);
+  --locale-toggle-bg: oklch(0.28 0.02 253 / 0.92);
+  --locale-toggle-border: oklch(0.42 0.02 252);
+  --locale-toggle-fg: oklch(0.9 0.02 250);
   --background-gradient:
     radial-gradient(circle at 8% 0%, oklch(0.45 0.12 238 / 0.32), transparent 37%),
     radial-gradient(circle at 92% 10%, oklch(0.5 0.12 75 / 0.26), transparent 34%),
@@ -105,6 +111,10 @@ html[data-theme="dark"] {
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-ring: var(--ring);
+}
+
+html[lang="vi"] {
+  --font-sans: "Noto Sans", "Noto Sans JP", "Noto Sans CJK JP", sans-serif;
 }
 
 @layer base {
@@ -438,5 +448,62 @@ html[data-theme="dark"] {
 
   .is-hidden {
     display: none;
+  }
+
+  .locale-toggle-container {
+    position: fixed;
+    top: var(--page-padding-block);
+    right: var(--page-padding-inline);
+    z-index: 50;
+  }
+
+  .locale-toggle {
+    display: flex;
+    border-radius: 1.05rem;
+    border: 1px solid var(--locale-toggle-border);
+    background: var(--locale-toggle-bg);
+    overflow: hidden;
+    box-shadow: 0 2px 8px oklch(0 0 0 / 0.08);
+  }
+
+  .locale-toggle-segment {
+    border: 0;
+    background: transparent;
+    color: var(--locale-toggle-fg);
+    transition: background 0.15s, color 0.15s;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 0;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .locale-toggle-segment:first-child {
+    border-radius: calc(1.05rem - 1px) 0 0 calc(1.05rem - 1px);
+  }
+
+  .locale-toggle-segment:last-child {
+    border-radius: 0 calc(1.05rem - 1px) calc(1.05rem - 1px) 0;
+  }
+
+  .locale-toggle-segment[aria-pressed="true"] {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  .locale-toggle-segment[aria-pressed="false"] {
+    background: transparent;
+    color: var(--muted-foreground);
+  }
+
+  .locale-toggle-segment[aria-pressed="false"]:hover {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+
+  .locale-toggle-segment:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
   }
 }
