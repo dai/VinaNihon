@@ -122,6 +122,10 @@ html[data-theme="dark"] {
     color-scheme: light;
   }
 
+  html[lang="vi"] {
+    font-family: "Noto Sans", "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  }
+
   html[data-theme="dark"] {
     color-scheme: dark;
   }
