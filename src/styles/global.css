@@ -82,7 +82,7 @@ html[data-theme="dark"] {
 
 @theme inline {
   --font-sans:
-    "Monaspace Neon",
+    "Geist Sans",
     "Noto Sans",
     "Noto Sans JP",
     "Noto Sans CJK",
@@ -169,14 +169,14 @@ html[data-theme="dark"] {
   }
 
   .panel-card {
-    @apply rounded-[var(--panel-radius)] border border-border/70 bg-card/85 backdrop-blur-md;
+    @apply rounded-[var(--panel-radius)] border border-border/50 bg-card/40 backdrop-blur-xl;
     padding: var(--panel-padding);
   }
 
   .translator-card,
   .result-card,
   .history-card {
-    box-shadow: var(--surface-shadow);
+    box-shadow: 0 8px 32px oklch(0 0 0 / 0.12);
   }
 
   .hero-header {
@@ -333,6 +333,8 @@ html[data-theme="dark"] {
     border-color: var(--theme-toggle-border);
     color: var(--theme-toggle-fg);
     min-width: clamp(6.75rem, 15vw, 7.75rem);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .theme-toggle:hover {
@@ -466,8 +468,10 @@ html[data-theme="dark"] {
     border-radius: 1.05rem;
     border: 1px solid var(--locale-toggle-border);
     background: var(--locale-toggle-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     overflow: hidden;
-    box-shadow: 0 2px 8px oklch(0 0 0 / 0.08);
+    box-shadow: 0 4px 16px oklch(0 0 0 / 0.1);
   }
 
   .locale-toggle-segment {
