@@ -82,6 +82,7 @@ html[data-theme="dark"] {
 
 @theme inline {
   --font-sans:
+    "Monaspace Neon",
     "Noto Sans",
     "Noto Sans JP",
     "Noto Sans CJK",
