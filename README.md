@@ -7,7 +7,7 @@
 
 入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
 翻訳履歴はブラウザの `localStorage` に最新 20 件まで保存されます。
-UI言語は画面右上のトグルボタン（日本語｜ベトナム語）で切り替えられ、セッションCookie 기준으로 SESSION KV に保存されます。
+UI言語は画面右上のトグルボタン（日本語｜ベトナム語）で切り替えられ、Cookie単位で SESSION KV に保存されます。
 
 <img src="114.jpg" width="300" alt="VinaNihon translation interface in light mode with Japanese UI locale active, showing the UI language toggle button in the top-right corner, translation controls, voice input and playback buttons, and translation history"> <img src="115.jpg" width="300" alt="VinaNihon translation interface in dark mode with Vietnamese UI locale active, showing the same controls with the language toggle switched to Vietnamese and history items localized accordingly">
 
