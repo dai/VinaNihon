@@ -441,6 +441,11 @@ html[data-theme="dark"] {
     @apply border-primary bg-primary/10 text-primary;
   }
 
+  .voice-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
   .is-hidden {
     display: none;
   }
@@ -450,6 +455,9 @@ html[data-theme="dark"] {
     top: var(--page-padding-block);
     right: var(--page-padding-inline);
     z-index: 50;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
   }
 
   .locale-toggle {
@@ -466,12 +474,12 @@ html[data-theme="dark"] {
     background: transparent;
     color: var(--locale-toggle-fg);
     transition: background 0.15s, color 0.15s;
-    padding: 0.45rem 0.75rem;
-    font-size: 0.78rem;
-    font-weight: 600;
+    padding: 0.35rem 0.5rem;
+    font-size: 1.1rem;
     border-radius: 0;
     cursor: pointer;
     white-space: nowrap;
+    line-height: 1;
   }
 
   .locale-toggle-segment:first-child {

@@ -101,9 +101,22 @@ const {
   </head>
   <body class="min-h-dvh">
     <div class="locale-toggle-container">
+      <button
+        type="button"
+        id="themeToggle"
+        class="theme-toggle action-button"
+        data-theme-toggle
+        data-i18n-toggle-light="themeToggleToDark"
+        data-i18n-toggle-dark="themeToggleToLight"
+        data-i18n-aria-light="themeToggleToDarkAria"
+        data-i18n-aria-dark="themeToggleToLightAria"
+        aria-label="テーマを切り替える"
+      >
+        ダークモード
+      </button>
       <div id="localeToggle" class="locale-toggle" role="group" aria-label="UI Language">
-        <button type="button" class="locale-toggle-segment" data-locale="ja" aria-pressed="true">日本語</button>
-        <button type="button" class="locale-toggle-segment" data-locale="vi" aria-pressed="false">ベトナム語</button>
+        <button type="button" class="locale-toggle-segment" data-locale="ja" aria-pressed="true" title="日本語に変更します。">🇯🇵</button>
+        <button type="button" class="locale-toggle-segment" data-locale="vi" aria-pressed="false" title="ベトナム語に変更します。">🇻🇳</button>
       </div>
     </div>
     <slot />

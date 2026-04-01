@@ -10,20 +10,6 @@ const ui = UI_COPY.ja;
       <h1 class="title-heading text-balance">VinaNihon</h1>
       <p id="appSubtitle" class="title-subheading text-balance" data-i18n="appSubtitle">{ui.appSubtitle}</p>
     </div>
-
-    <button
-      type="button"
-      id="themeToggle"
-      class="theme-toggle action-button"
-      data-theme-toggle
-      data-i18n-toggle-light="themeToggleToDark"
-      data-i18n-toggle-dark="themeToggleToLight"
-      data-i18n-aria-light="themeToggleToDarkAria"
-      data-i18n-aria-dark="themeToggleToLightAria"
-      aria-label={ui.themeToggleToDarkAria}
-    >
-      {ui.themeToggleToDark}
-    </button>
   </header>
 
   <div class="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-end">
@@ -65,30 +51,6 @@ const ui = UI_COPY.ja;
       class="form-control source-textarea"
       required
     ></textarea>
-    <div class="mt-2 flex flex-wrap gap-2">
-      <button
-        type="button"
-        class="voice-button action-button"
-        data-voice-action="speak"
-        data-speak-kind="source"
-        data-default-label-key="speakLabel"
-        data-default-label={ui.speakLabel}
-        aria-label={ui.speakLabel}
-      >
-        {ui.speakLabel}
-      </button>
-      <button
-        type="button"
-        class="voice-button action-button"
-        id="sourceListenButton"
-        data-voice-action="listen"
-        data-default-label-key="listenLabel"
-        data-default-label={ui.listenLabel}
-        aria-label={ui.listenLabel}
-      >
-        {ui.listenLabel}
-      </button>
-    </div>
   </label>
 
   <div class="grid gap-3 sm:grid-cols-2">
@@ -123,6 +85,34 @@ const ui = UI_COPY.ja;
   >
     {ui.submitIdle}
   </button>
+
+  <div class="voice-form-controls flex flex-wrap gap-2 mt-3">
+    <button
+      type="button"
+      class="voice-button action-button"
+      data-voice-action="speak"
+      data-speak-kind="source"
+      data-default-label-key="speakLabel"
+      data-default-label={ui.speakLabel}
+      aria-label={ui.speakLabel}
+      disabled
+    >
+      {ui.speakLabel}
+    </button>
+    <button
+      type="button"
+      class="voice-button action-button"
+      id="sourceListenButton"
+      data-voice-action="listen"
+      data-default-label-key="listenLabel"
+      data-default-label={ui.listenLabel}
+      aria-label={ui.listenLabel}
+      disabled
+    >
+      {ui.listenLabel}
+    </button>
+  </div>
+
   <p id="formStatus" class="status-line text-sm text-muted-foreground" aria-live="polite"></p>
   <p id="voiceStatus" class="status-line text-sm text-muted-foreground" aria-live="polite"></p>
   <p id="formError" class="status-line text-sm font-medium text-destructive" role="alert" hidden></p>

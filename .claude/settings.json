@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh run:*)",
+      "Bash(ls dist/_astro/*.css)",
+      "Bash(wc -c dist/_astro/*.css)",
+      "Bash(grep -c \"Noto Sans\" dist/_astro/*.css)",
+      "Bash(grep -i \"vietnamese\\\\|1EA0\\\\|1EF9\\\\|Tiếng\" dist/_astro/*.css)",
+      "Bash(grep -o \"Noto Sans[^\"\"'''']*\" dist/_astro/*.css)",
+      "Bash(grep -E \"@font-face\\\\{font-family:Noto Sans[^J]\" dist/_astro/*.css)",
+      "Bash(grep -oE 'font-family:\"\"\"\"Noto Sans[^\"\"\"\"]*\"\"\"\"[^{]*\\\\{[^}]*unicode-range:U[^;]+' dist/_astro/*.css)",
+      "Bash(grep \"Noto Sans\" dist/_astro/*.css)",
+      "Bash(grep -oP '@font-face\\\\{font-family:\"\"\"\"Noto Sans[^}]+}' dist/_astro/*.css)",
+      "Bash(grep -o \"@font-face{font-family:[^}]*\" dist/_astro/*.css)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\dai\\.claude\\plans"
+    ]
+  }
+}
