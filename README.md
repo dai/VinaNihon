@@ -6,9 +6,10 @@
 トップページでそのまま翻訳でき、言い換え・ニュアンス・返信例まで確認できます。
 
 入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
-翻訳履歴はブラウザの `localStorage` に最新 20 件まで保存され、入力言語をベトナム語に切り替えると履歴 UI もベトナム語に切り替わります。
+翻訳履歴はブラウザの `localStorage` に最新 20 件まで保存されます。
+UI言語は画面右上のトグルボタン（日本語｜ベトナム語）で切り替えられ、セッションCookie 기준으로 SESSION KV に保存されます。
 
-<img src="114.jpg" width="300" alt="VinaNihon translation interface in light mode showing Japanese to Vietnamese translation controls, voice input and playback buttons, and a translation history section stored in the browser for reusing recent results"> <img src="115.jpg" width="300" alt="VinaNihon translation interface in dark mode showing the same Japanese and Vietnamese workflow, with localized labels, translation results, and history items that follow the selected input language">
+<img src="114.jpg" width="300" alt="VinaNihon translation interface in light mode with Japanese UI locale active, showing the UI language toggle button in the top-right corner, translation controls, voice input and playback buttons, and translation history"> <img src="115.jpg" width="300" alt="VinaNihon translation interface in dark mode with Vietnamese UI locale active, showing the same controls with the language toggle switched to Vietnamese and history items localized accordingly">
 
 ## Stack
 
@@ -88,6 +89,12 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 - 保存対象は原文、主翻訳、言語方向、モード、トーン、作成日時です
 - 最新 20 件まで保持し、各履歴から再入力、個別削除、全件削除ができます
 - 補足情報（言い換え候補、ニュアンスメモ、返信例）は履歴には保存されず、再表示時に必要なら再取得します
+
+## UI言語
+
+- 画面右上のトグルボタン（日本語｜ベトナム語）でUI言語を切り替えられます
+- UI言語の設定は Cloudflare SESSION KV に保存され、ユーザーのセッション単位で保持されます
+- 翻訳元言語（sourceLang）は従来通り `localStorage` に保存されます
 
 ## Environment Variables
 

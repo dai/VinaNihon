@@ -6,9 +6,10 @@
 Bạn có thể dịch trực tiếp ngay trên trang chủ, đồng thời xem các cách diễn đạt khác, sắc thái ý nghĩa và ví dụ trả lời.
 
 Phần nhập liệu hỗ trợ nhập giọng nói và đọc văn bản. Mỗi phần trong kết quả dịch cũng hỗ trợ đọc lại.
-Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 20 mục gần nhất. Khi đổi ngôn ngữ nhập sang tiếng Việt, phần UI của lịch sử cũng đổi sang tiếng Việt.
+Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 20 mục gần nhất.
+Ngôn ngữ giao diện có thể chuyển bằng nút chuyển đổi ở góc trên bên phải (日本語｜ベトナム語), và được lưu trong SESSION KV theo phiên người dùng.
 
-<img src="112.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với điều khiển dịch Nhật-Việt, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch được lưu trong trình duyệt để dùng lại các kết quả gần đây"> <img src="113.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối cho cùng luồng dịch giữa tiếng Nhật và tiếng Việt, với nhãn giao diện và các mục lịch sử tự đổi theo ngôn ngữ nhập đang chọn">
+<img src="112.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với ngôn ngữ giao diện tiếng Nhật, nút chuyển đổi ngôn ngữ ở góc trên bên phải, các điều khiển dịch, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch"> <img src="113.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối với ngôn ngữ giao diện tiếng Việt có dấu, nút chuyển đổi ngôn ngữ và các mục lịch sử được hiển thị bằng tiếng Việt">
 
 ## Stack
 
@@ -88,6 +89,12 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 - Dữ liệu lưu gồm văn bản gốc, bản dịch chính, hướng dịch, chế độ, sắc thái và thời gian tạo
 - Giữ tối đa 20 mục mới nhất, hỗ trợ dùng lại, xóa từng mục và xóa toàn bộ
 - Thông tin bổ sung như cách diễn đạt khác, ghi chú sắc thái và gợi ý phản hồi không được lưu trong lịch sử; nếu cần sẽ tải lại sau
+
+## Ngôn ngữ giao diện
+
+- Có thể chuyển ngôn ngữ giao diện bằng nút chuyển đổi ở góc trên bên phải (日本語｜ベトナム語)
+- Ngôn ngữ giao diện được lưu trong SESSION KV của Cloudflare theo phiên người dùng
+- Ngôn ngữ nguồn dịch (sourceLang) vẫn được lưu trong `localStorage` như trước
 
 ## Biến môi trường
 
