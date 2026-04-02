@@ -96,14 +96,14 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 - UI言語の設定は Cloudflare SESSION KV に保存され、ユーザーのセッション単位で保持されます
 - 翻訳元言語（sourceLang）は従来通り `localStorage` に保存されます
 
-## Environment Variables
+## 環境変数
 
-For Astro local development, use `.env`.
+Astro のローカル開発では `.env` を使用します。
 
-- `TRANSLATION_PROVIDER=mock` (default)
-- `OPENAI_API_KEY=` (required when `TRANSLATION_PROVIDER=openai`)
-- `OPENAI_MODEL=gpt-4.1-mini` (optional)
-- `OPENAI_BASE_URL=https://api.openai.com/v1` (optional)
+- `TRANSLATION_PROVIDER=mock` (デフォルト)
+- `OPENAI_API_KEY=` (`TRANSLATION_PROVIDER=openai` の場合必須)
+- `OPENAI_MODEL=gpt-4.1-mini` (任意)
+- `OPENAI_BASE_URL=https://api.openai.com/v1` (任意)
 
 MiniMax を使う場合の例:
 
@@ -112,33 +112,33 @@ MiniMax を使う場合の例:
 - `OPENAI_MODEL=MiniMax-M2.7`
 - `OPENAI_BASE_URL=https://api.minimax.io/v1`
 
-For Cloudflare Pages runtime, set the same variables in Pages project settings.
+Cloudflare Pages ランタイムでは、Pages プロジェクト設定で同じ環境変数を設定してください。
 
-If you use Wrangler local runtime, `.dev.vars` is also supported.
+Wrangler ローカルランタイムを使用する場合は、`.dev.vars` もサポートされています。
 
-## Cloudflare Pages Setup
+## Cloudflare Pages 設定
 
-This project is configured for Cloudflare Pages Functions.
+このプロジェクトは Cloudflare Pages Functions 用に設定されています。
 
 ### `wrangler.jsonc`
 
-`wrangler.jsonc` includes:
+`wrangler.jsonc` の内容包括:
 
 - `pages_build_output_dir: "./dist"`
 - `compatibility_flags: ["nodejs_compat"]`
-- `SESSION` KV binding for Astro sessions
-- `env.preview` uses the same `SESSION` KV namespace as production by default
-- No `main` field, because this repository deploys to Cloudflare Pages, not a standalone Worker
+- Astro sessions 用 `SESSION` KV binding
+- `env.preview` はデフォルトで production と同じ `SESSION` KV namespace を使用
+- `main` フィールドなし（このリポジトリは Standalone Worker ではなく Cloudflare Pages にデプロイするため）
 
-If you need Preview and Production to be isolated, add a separate Preview KV namespace later.
+Preview と Production を分離する必要がある場合は、後で別の Preview KV namespace を追加してください。
 
-### 1. Create the `SESSION` KV namespace
+### 1. `SESSION` KV namespace を作成
 
 ```bash
 npx wrangler kv namespace create SESSION
 ```
 
-Copy the returned ID into `wrangler.jsonc`:
+返された ID を `wrangler.jsonc` にコピーします:
 
 ```jsonc
 "kv_namespaces": [
@@ -149,33 +149,33 @@ Copy the returned ID into `wrangler.jsonc`:
 ]
 ```
 
-If you later want a separate Preview KV, add another namespace and override it under `env.preview`.
+後で Preview KV を分離する場合は、別の namespace を追加して `env.preview` で上書きしてください。
 
-### 2. Configure the Pages project
+### 2. Pages プロジェクトを設定
 
-In Cloudflare Pages:
+Cloudflare Pages で:
 
-- Connect this GitHub repository
+- この GitHub リポジトリを接続
 - Build command: `npm run build`
 - Build output directory: `dist`
 - Node.js version: `22`
 
-### 3. Add environment variables
+### 3. 環境変数を追加
 
-In Pages project settings, add the same runtime variables you use locally in `.env`.
+Pages プロジェクト設定で、ローカル環境の `.env` で使用するのと同じ環境変数を追加します。
 
-Examples:
+例:
 
 - `TRANSLATION_PROVIDER=mock`
-- `TRANSLATION_PROVIDER=openai` with `OPENAI_API_KEY`
-- `TRANSLATION_PROVIDER=openai` with `OPENAI_BASE_URL=https://api.minimax.io/v1`
+- `TRANSLATION_PROVIDER=openai` + `OPENAI_API_KEY`
+- `TRANSLATION_PROVIDER=openai` + `OPENAI_BASE_URL=https://api.minimax.io/v1`
 
-### 4. Bind the KV namespace in Pages
+### 4. Pages で KV namespace をバインド
 
-In Pages project settings, add a KV binding:
+Pages プロジェクト設定で KV binding を追加します:
 
 - Variable name: `SESSION`
-- KV namespace: the same namespace used in `wrangler.jsonc`
+- KV namespace: `wrangler.jsonc` で使用 중인 same namespace
 
 ## Routes
 
@@ -257,17 +257,17 @@ Response:
 
 ## Provider Architecture
 
-`src/lib/translate/` provides a service abstraction:
+`src/lib/translate/` はサービス抽象化を提供します:
 
-- `mock` provider: always available fallback
-- `openai` provider: calls `POST https://api.openai.com/v1/responses`
+- `mock` provider: 常時利用可能なフォールバック
+- `openai` provider: `POST https://api.openai.com/v1/responses` を呼び出します
   `OPENAI_BASE_URL` を OpenAI-compatible endpoint に切り替えた場合は、その backend に応じて `responses` または `chat/completions` を自動選択
 
-API route contracts are unchanged. `/api/translate` and `/api/reply` stay thin and delegate to the service layer.
+API route contracts は変更なし。`/api/translate` と `/api/reply` は薄く、service layer に委任します。
 
-The homepage uses a single `/api/translate` request so translation and suggested replies are generated in one provider call. `/api/reply` remains available as a separate endpoint for compatibility.
+このページは翻訳と言葉の提示が1回の provider 呼び出しで生成されるため、単一の `/api/translate` request を使用します。`/api/reply` は下位互換性のために別の endpoint として残っています。
 
-For Cloudflare Pages CI, the build script removes generated `_worker.js/wrangler.json`, `_worker.js/.dev.vars`, and `.wrangler/deploy/config.json` after `astro build`. It also copies `_worker.js/entry.mjs` to `_worker.js/index.js` because the current Pages uploader expects that filename during deployment.
+Cloudflare Pages CI 用に、build script は `astro build` の後に生成された `_worker.js/wrangler.json`、`_worker.js/.dev.vars`、`.wrangler/deploy/config.json` を削除します。また、現在の Pages uploader はデプロイ時にそのファイル名を期待するため、`_worker.js/entry.mjs` を `_worker.js/index.js` にコピーします。
 
 ## API Smoke Test (local)
 
@@ -324,4 +324,4 @@ curl -s -X POST http://localhost:4321/api/reply \
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+このプロジェクトは MIT License の下でライセンスされています。詳細については [LICENSE](./LICENSE) ファイルを参照してください。
