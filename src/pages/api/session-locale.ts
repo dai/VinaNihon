@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { error, json, isLanguage } from "../../lib/validators";
+import { error, json } from "../../lib/validators";
 import type { CfEnv } from "../../lib/usage";
 import {
   getSessionData,

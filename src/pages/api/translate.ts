@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { isLanguage, isMode, isTone, error, json } from "../../lib/validators";
+import { parseJsonBody } from "../../lib/api-utils";
 import type { TranslateRequest } from "../../lib/types";
 import { translateText } from "../../lib/translate";
 import {
@@ -45,18 +46,17 @@ function parseRequestBody(body: unknown): TranslateRequest | null {
 }
 
 export const POST: APIRoute = async (context) => {
-  let body: unknown;
+  const result = await parseJsonBody(
+    context,
+    parseRequestBody,
+    "Invalid request payload for /api/translate."
+  );
 
-  try {
-    body = await context.request.json();
-  } catch {
-    return error("Invalid JSON body.", 400);
+  if (!result.success) {
+    return result.errorResponse;
   }
 
-  const input = parseRequestBody(body);
-  if (!input) {
-    return error("Invalid request payload for /api/translate.", 400);
-  }
+  const input = result.data;
 
   // Get Cloudflare env from context.locals
   const env = context.locals as CfEnv;
@@ -96,16 +96,16 @@ export const POST: APIRoute = async (context) => {
   }
 
   try {
-    const result = await translateText(input);
+    const translateResult = await translateText(input);
     // Increment usage after successful translation
     await incrementUsage(
       env,
       usageState.key,
       usageState.usage,
       input.text,
-      result.mainTranslation
+      translateResult.mainTranslation
     );
-    return json(result, 200);
+    return json(translateResult, 200);
   } catch (cause) {
     console.error("/api/translate failed", cause);
     return error("翻訳処理に失敗しました。しばらく経ってから再度お試しください。", 500);

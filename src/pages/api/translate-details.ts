@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { isLanguage, isMode, isTone, error, json } from "../../lib/validators";
+import { parseJsonBody } from "../../lib/api-utils";
 import type { TranslationDetailsRequest } from "../../lib/types";
 import { translateDetails } from "../../lib/translate";
 
@@ -44,22 +45,19 @@ function parseRequestBody(body: unknown): TranslationDetailsRequest | null {
 }
 
 export const POST: APIRoute = async (context) => {
-  let body: unknown;
+  const result = await parseJsonBody(
+    context,
+    parseRequestBody,
+    "Invalid request payload for /api/translate-details."
+  );
 
-  try {
-    body = await context.request.json();
-  } catch {
-    return error("Invalid JSON body.", 400);
-  }
-
-  const input = parseRequestBody(body);
-  if (!input) {
-    return error("Invalid request payload for /api/translate-details.", 400);
+  if (!result.success) {
+    return result.errorResponse;
   }
 
   try {
-    const result = await translateDetails(input);
-    return json(result, 200);
+    const translateResult = await translateDetails(result.data);
+    return json(translateResult, 200);
   } catch (cause) {
     console.error("/api/translate-details failed", cause);
     return error("補足情報の取得に失敗しました。しばらく経ってから再度お試しください。", 500);

@@ -243,7 +243,7 @@ html[data-theme="dark"] {
   .section-subheading {
     font-family: var(--font-title);
     font-size: var(--text-subsection);
-    font-weight: 400;
+    font-weight: 700;
     line-height: 1.25;
     letter-spacing: -0.01em;
   }
@@ -503,12 +503,15 @@ html[data-theme="dark"] {
   }
 
   .history-item-summary {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 2;
     display: grid;
     gap: 0.45rem;
     cursor: pointer;
     list-style: none;
     padding: 0.95rem 4.5rem 0.95rem 0.95rem;
+    background: inherit;
   }
 
   .history-item-summary::-webkit-details-marker {
@@ -599,9 +602,21 @@ html[data-theme="dark"] {
     padding-left: 1.1rem;
   }
 
+  .result-list li {
+    background: oklch(0.95 0.05 90);
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+  }
+
   .result-body {
     font-size: var(--text-body);
     line-height: 1.68;
+  }
+
+  #mainTranslation {
+    background: oklch(0.95 0.05 90);
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.6rem;
   }
 
   .surface-card {
@@ -760,6 +775,15 @@ html[data-theme="dark"] {
 
     .main-column {
       min-height: max(var(--history-panel-height), clamp(24rem, 56vh, 44rem));
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-column > .translator-card,
+    .main-column > .result-card {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
     }
 
     .hero-actions {
@@ -771,7 +795,6 @@ html[data-theme="dark"] {
     }
 
     .history-column {
-      align-self: end;
       display: grid;
       align-content: end;
       position: sticky;
@@ -782,7 +805,8 @@ html[data-theme="dark"] {
     }
 
     .history-card {
-      height: var(--history-panel-height);
+      height: 100%;
+      max-height: max(var(--history-panel-height), clamp(24rem, 56vh, 44rem));
       overflow: auto;
       padding-right: calc(var(--panel-padding) - 0.1rem);
     }

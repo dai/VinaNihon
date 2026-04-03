@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { isLanguage, isMode, isTone, error, json } from "../../lib/validators";
+import { parseJsonBody } from "../../lib/api-utils";
 import type { ReplyRequest } from "../../lib/types";
 import { suggestReplies } from "../../lib/translate";
 
@@ -44,22 +45,19 @@ function parseRequestBody(body: unknown): ReplyRequest | null {
 }
 
 export const POST: APIRoute = async (context) => {
-  let body: unknown;
+  const result = await parseJsonBody(
+    context,
+    parseRequestBody,
+    "Invalid request payload for /api/reply."
+  );
 
-  try {
-    body = await context.request.json();
-  } catch {
-    return error("Invalid JSON body.", 400);
-  }
-
-  const input = parseRequestBody(body);
-  if (!input) {
-    return error("Invalid request payload for /api/reply.", 400);
+  if (!result.success) {
+    return result.errorResponse;
   }
 
   try {
-    const result = await suggestReplies(input);
-    return json(result, 200);
+    const replyResult = await suggestReplies(result.data);
+    return json(replyResult, 200);
   } catch (cause) {
     console.error("/api/reply failed", cause);
     return error("返信例の生成に失敗しました。しばらく経ってから再度お試しください。", 500);
