@@ -34,6 +34,7 @@ html[data-theme="light"] {
   --panel-padding: clamp(0.95rem, 1.5vw + 0.65rem, 1.2rem);
   --panel-radius: 1.5rem;
   --header-control-height: 2.75rem;
+  --toggle-control-height: 1.375rem;
   --history-panel-height: clamp(20rem, 50vh, 36rem);
   --control-min-height: 2.75rem;
   --control-radius: 1.05rem;
@@ -370,13 +371,18 @@ html[data-theme="dark"] {
 
   .theme-toggle {
     display: inline-flex;
-    min-height: var(--header-control-height);
+    min-height: var(--toggle-control-height);
     align-items: center;
     justify-content: center;
     background: var(--theme-toggle-bg);
     border-color: var(--theme-toggle-border);
     color: var(--theme-toggle-fg);
     min-width: clamp(6.75rem, 15vw, 7.75rem);
+    border-radius: 0.72rem;
+    padding-block: 0.12rem;
+    padding-inline: 0.64rem;
+    font-size: 0.68rem;
+    line-height: 1;
     white-space: nowrap;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -680,9 +686,9 @@ html[data-theme="dark"] {
 
   .locale-toggle {
     display: flex;
-    min-height: var(--header-control-height);
+    min-height: var(--toggle-control-height);
     align-items: stretch;
-    border-radius: 1.05rem;
+    border-radius: 0.72rem;
     border: 1px solid var(--locale-toggle-border);
     background: var(--locale-toggle-bg);
     backdrop-filter: blur(12px);
@@ -693,15 +699,15 @@ html[data-theme="dark"] {
 
   .locale-toggle-segment {
     display: inline-flex;
-    min-width: 2.85rem;
+    min-width: 2rem;
     align-items: center;
     justify-content: center;
     border: 0;
     background: transparent;
     color: var(--locale-toggle-fg);
     transition: background 0.15s, color 0.15s;
-    padding: 0 0.7rem;
-    font-size: 1.1rem;
+    padding: 0 0.48rem;
+    font-size: 0.82rem;
     border-radius: 0;
     cursor: pointer;
     white-space: nowrap;
@@ -709,11 +715,11 @@ html[data-theme="dark"] {
   }
 
   .locale-toggle-segment:first-child {
-    border-radius: calc(1.05rem - 1px) 0 0 calc(1.05rem - 1px);
+    border-radius: calc(0.72rem - 1px) 0 0 calc(0.72rem - 1px);
   }
 
   .locale-toggle-segment:last-child {
-    border-radius: 0 calc(1.05rem - 1px) calc(1.05rem - 1px) 0;
+    border-radius: 0 calc(0.72rem - 1px) calc(0.72rem - 1px) 0;
   }
 
   .locale-toggle-segment[aria-pressed="true"] {
