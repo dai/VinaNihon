@@ -13,24 +13,34 @@ const ui = UI_COPY.ja;
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button action-button"
+          class="voice-button action-button icon-action-button"
           data-voice-action="speak"
           data-speak-kind="main"
           data-default-label-key="speakLabel"
           data-default-label={ui.speakLabel}
+          data-icon-idle="🔊"
+          data-icon-active="⏹"
+          data-tooltip-idle-key="tooltipMainSpeak"
+          data-tooltip-active-key="stopLabel"
           aria-label={ui.speakLabel}
+          title={ui.tooltipMainSpeak}
         >
-          {ui.speakLabel}
+          🔊
         </button>
         <button
           type="button"
-          class="copy-button action-button"
+          class="copy-button action-button icon-action-button"
           data-copy-kind="main"
           data-default-label-key="copyLabel"
           data-copied-label-key="copiedLabel"
+          data-icon-idle="⧉"
+          data-icon-copied="✓"
+          data-tooltip-idle-key="tooltipMainCopy"
+          data-tooltip-copied-key="copiedLabel"
           aria-label={ui.copyLabel}
+          title={ui.tooltipMainCopy}
         >
-          {ui.copyLabel}
+          ⧉
         </button>
       </div>
     </div>
@@ -55,24 +65,34 @@ const ui = UI_COPY.ja;
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button action-button"
+          class="voice-button action-button icon-action-button"
           data-voice-action="speak"
           data-speak-kind="alternatives"
           data-default-label-key="speakLabel"
           data-default-label={ui.speakLabel}
+          data-icon-idle="🔊"
+          data-icon-active="⏹"
+          data-tooltip-idle-key="tooltipAlternativesSpeak"
+          data-tooltip-active-key="stopLabel"
           aria-label={ui.speakLabel}
+          title={ui.tooltipAlternativesSpeak}
         >
-          {ui.speakLabel}
+          🔊
         </button>
         <button
           type="button"
-          class="copy-button action-button"
+          class="copy-button action-button icon-action-button"
           data-copy-kind="alternatives"
           data-default-label-key="copyLabel"
           data-copied-label-key="copiedLabel"
+          data-icon-idle="⧉"
+          data-icon-copied="✓"
+          data-tooltip-idle-key="tooltipAlternativesCopy"
+          data-tooltip-copied-key="copiedLabel"
           aria-label={ui.copyLabel}
+          title={ui.tooltipAlternativesCopy}
         >
-          {ui.copyLabel}
+          ⧉
         </button>
       </div>
     </div>
@@ -85,24 +105,34 @@ const ui = UI_COPY.ja;
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button action-button"
+          class="voice-button action-button icon-action-button"
           data-voice-action="speak"
           data-speak-kind="nuance"
           data-default-label-key="speakLabel"
           data-default-label={ui.speakLabel}
+          data-icon-idle="🔊"
+          data-icon-active="⏹"
+          data-tooltip-idle-key="tooltipNuanceSpeak"
+          data-tooltip-active-key="stopLabel"
           aria-label={ui.speakLabel}
+          title={ui.tooltipNuanceSpeak}
         >
-          {ui.speakLabel}
+          🔊
         </button>
         <button
           type="button"
-          class="copy-button action-button"
+          class="copy-button action-button icon-action-button"
           data-copy-kind="nuance"
           data-default-label-key="copyLabel"
           data-copied-label-key="copiedLabel"
+          data-icon-idle="⧉"
+          data-icon-copied="✓"
+          data-tooltip-idle-key="tooltipNuanceCopy"
+          data-tooltip-copied-key="copiedLabel"
           aria-label={ui.copyLabel}
+          title={ui.tooltipNuanceCopy}
         >
-          {ui.copyLabel}
+          ⧉
         </button>
       </div>
     </div>
@@ -115,24 +145,34 @@ const ui = UI_COPY.ja;
       <div class="action-group flex flex-wrap items-center gap-2">
         <button
           type="button"
-          class="voice-button action-button"
+          class="voice-button action-button icon-action-button"
           data-voice-action="speak"
           data-speak-kind="replies"
           data-default-label-key="speakLabel"
           data-default-label={ui.speakLabel}
+          data-icon-idle="🔊"
+          data-icon-active="⏹"
+          data-tooltip-idle-key="tooltipRepliesSpeak"
+          data-tooltip-active-key="stopLabel"
           aria-label={ui.speakLabel}
+          title={ui.tooltipRepliesSpeak}
         >
-          {ui.speakLabel}
+          🔊
         </button>
         <button
           type="button"
-          class="copy-button action-button"
+          class="copy-button action-button icon-action-button"
           data-copy-kind="replies"
           data-default-label-key="copyLabel"
           data-copied-label-key="copiedLabel"
+          data-icon-idle="⧉"
+          data-icon-copied="✓"
+          data-tooltip-idle-key="tooltipRepliesCopy"
+          data-tooltip-copied-key="copiedLabel"
           aria-label={ui.copyLabel}
+          title={ui.tooltipRepliesCopy}
         >
-          {ui.copyLabel}
+          ⧉
         </button>
       </div>
     </div>

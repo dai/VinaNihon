@@ -5,9 +5,11 @@
 Đây là một MVP dịch thuật đơn giản, tập trung vào tiếng Việt 🇻🇳 ↔ tiếng Nhật 🇯🇵.  
 Bạn có thể dịch trực tiếp ngay trên trang chủ, đồng thời xem các cách diễn đạt khác, sắc thái ý nghĩa và ví dụ trả lời.
 
-Phần nhập liệu hỗ trợ nhập giọng nói và đọc văn bản. Mỗi phần trong kết quả dịch cũng hỗ trợ đọc lại.
+Trong ô nhập liệu, các nút nhập giọng nói và đọc văn bản được nhúng ngay ở góc phải phía dưới của textarea, hiển thị bằng icon kèm tooltip.
+Mỗi phần trong kết quả dịch cũng dùng nút icon + tooltip cho thao tác đọc và sao chép.
 Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 20 mục gần nhất.
-Ngôn ngữ giao diện có thể chuyển bằng nút chuyển đổi ở góc trên bên phải (日本語｜ベトナム語), và được lưu trong SESSION KV theo phiên người dùng.
+Khung lịch sử dùng accordion với header sticky, cho phép mở từng mục rồi dùng lại, sao chép, xóa hoặc đọc bản dịch chính.
+Ngôn ngữ giao diện có thể chuyển bằng nút chuyển đổi ở góc trên bên phải của khung chính (日本語｜ベトナム語), và được lưu trong SESSION KV theo phiên người dùng.
 
 <img src="112.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với ngôn ngữ giao diện tiếng Nhật, nút chuyển đổi ngôn ngữ ở góc trên bên phải, các điều khiển dịch, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch"> <img src="113.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối với ngôn ngữ giao diện tiếng Việt có dấu, nút chuyển đổi ngôn ngữ và các mục lịch sử được hiển thị bằng tiếng Việt">
 
@@ -59,6 +61,31 @@ npm run dev
 
 5. Mở: `http://localhost:4321`
 
+## Xem trước cục bộ (bản build)
+
+`npm run dev` là server dùng khi đang phát triển. Nếu muốn xem đúng output sau khi build, hãy chạy `build` trước rồi dùng `preview`.
+
+1. Build:
+
+```bash
+npm run build
+```
+
+2. Chạy preview cho bản đã build:
+
+```bash
+npm run preview
+```
+
+3. Mở: `http://localhost:4321`
+
+Nếu PowerShell gặp lỗi với wrapper `npm`, hãy dùng `npm.cmd` như sau.
+
+```powershell
+npm.cmd run build
+npm.cmd run preview
+```
+
 ## Bắt đầu nhanh
 
 Nếu cấu hình `.env` như dưới đây, ứng dụng sẽ dùng bản dịch OpenAI thật:
@@ -87,12 +114,15 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 
 - Lịch sử được lưu trong `localStorage` của từng trình duyệt
 - Dữ liệu lưu gồm văn bản gốc, bản dịch chính, hướng dịch, chế độ, sắc thái và thời gian tạo
-- Giữ tối đa 20 mục mới nhất, hỗ trợ dùng lại, xóa từng mục và xóa toàn bộ
+- Giữ tối đa 20 mục mới nhất; mỗi mục hiển thị như một accordion có phần thời gian riêng
+- Header lịch sử và nút xóa toàn bộ luôn còn hiển thị khi cuộn
+- Từng mục hỗ trợ dùng lại, sao chép bản dịch chính, đọc bản dịch chính và xóa riêng
+- Các dòng lịch sử được tô xen kẽ để dễ phân biệt hơn khi xem nhanh
 - Thông tin bổ sung như cách diễn đạt khác, ghi chú sắc thái và gợi ý phản hồi không được lưu trong lịch sử; nếu cần sẽ tải lại sau
 
 ## Ngôn ngữ giao diện
 
-- Có thể chuyển ngôn ngữ giao diện bằng nút chuyển đổi ở góc trên bên phải (日本語｜ベトナム語)
+- Có thể chuyển ngôn ngữ giao diện bằng nút chuyển đổi ở góc trên bên phải của khung chính (日本語｜ベトナム語)
 - Ngôn ngữ giao diện được lưu trong SESSION KV của Cloudflare theo phiên người dùng
 - Ngôn ngữ nguồn dịch (sourceLang) vẫn được lưu trong `localStorage` như trước
 
@@ -301,7 +331,7 @@ curl -s -X POST http://localhost:4321/api/reply \
 ## Khắc phục sự cố
 
 - Nút nhập giọng nói bị vô hiệu hóa
-  - Cần có `SpeechRecognition` hoặc `webkitSpeechRecognition`. Thường có trên các trình duyệt họ Chrome.
+  - Cần có `SpeechRecognition` hoặc `webkitSpeechRecognition`. Thường có trên các trình duyệt họ Chrome. Khi không hỗ trợ, icon trong textarea vẫn hiện ở dạng mờ như placeholder.
 - Giọng đọc không đúng như mong muốn
   - Các giọng đọc khả dụng phụ thuộc vào trình duyệt và hệ điều hành. Tiếng Nhật ưu tiên `ja-JP`, tiếng Việt ưu tiên `vi-VN`.
 - `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
@@ -317,10 +347,10 @@ curl -s -X POST http://localhost:4321/api/reply \
 
 ## Scripts
 
-- `npm run dev`
-- `npm run build`
-- `npm run preview`
-- `npm run check`
+- `npm run dev`: khởi động Astro dev server
+- `npm run build`: tạo output cho Cloudflare Pages trong `dist/`
+- `npm run preview`: xem cục bộ output sau khi `build`
+- `npm run check`: chạy kiểm tra Astro / TypeScript
 
 ## License
 

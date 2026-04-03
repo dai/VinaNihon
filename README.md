@@ -5,9 +5,11 @@
 ベトナム語🇻🇳↔日本語🇯🇵に特化した、シンプルな翻訳MVPです。  
 トップページでそのまま翻訳でき、言い換え・ニュアンス・返信例まで確認できます。
 
-入力欄で音声入力と読み上げ、翻訳結果の各セクションで読み上げを利用できます。
+入力欄では textarea 右下に音声入力・読み上げボタンを埋め込み、アイコンとツールチップで操作できます。
+翻訳結果の各セクションも、読み上げ・コピーをアイコンボタン + ツールチップで利用できます。
 翻訳履歴はブラウザの `localStorage` に最新 20 件まで保存されます。
-UI言語は画面右上のトグルボタン（日本語｜ベトナム語）で切り替えられ、Cookie単位で SESSION KV に保存されます。
+履歴ペインは sticky ヘッダー付きの accordion で、各項目を展開しつつ再入力・コピー・削除・読み上げを行えます。
+UI言語はメインペイン右上のトグルボタン（日本語｜ベトナム語）で切り替えられ、Cookie単位で SESSION KV に保存されます。
 
 <img src="114.jpg" width="300" alt="VinaNihon translation interface in light mode with Japanese UI locale active, showing the UI language toggle button in the top-right corner, translation controls, voice input and playback buttons, and translation history"> <img src="115.jpg" width="300" alt="VinaNihon translation interface in dark mode with Vietnamese UI locale active, showing the same controls with the language toggle switched to Vietnamese and history items localized accordingly">
 
@@ -59,6 +61,31 @@ npm run dev
 
 5. Open: `http://localhost:4321`
 
+## Local Preview (built output)
+
+`npm run dev` は開発用サーバーです。ビルド後の出力を確認したいときは、先に `build` してから `preview` を使います。
+
+1. Build:
+
+```bash
+npm run build
+```
+
+2. Preview the built app:
+
+```bash
+npm run preview
+```
+
+3. Open: `http://localhost:4321`
+
+PowerShell 環境で `npm` ラッパーがうまく動かない場合は、次のように `npm.cmd` を使ってください。
+
+```powershell
+npm.cmd run build
+npm.cmd run preview
+```
+
 ## Quick Start
 
 `.env` を以下のように設定すると、実際の OpenAI 翻訳を使えます。
@@ -87,12 +114,15 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 
 - 履歴は各ブラウザの `localStorage` に保存されます
 - 保存対象は原文、主翻訳、言語方向、モード、トーン、作成日時です
-- 最新 20 件まで保持し、各履歴から再入力、個別削除、全件削除ができます
+- 最新 20 件まで保持し、各履歴は日時付き accordion として折りたためます
+- 履歴ヘッダーと全件削除ボタンはスクロール中も表示されたままです
+- 各履歴から再入力、主翻訳のコピー、主翻訳の読み上げ、個別削除ができます
+- 履歴行は視認性向上のために交互に色分けされています
 - 補足情報（言い換え候補、ニュアンスメモ、返信例）は履歴には保存されず、再表示時に必要なら再取得します
 
 ## UI言語
 
-- 画面右上のトグルボタン（日本語｜ベトナム語）でUI言語を切り替えられます
+- メインペイン右上のトグルボタン（日本語｜ベトナム語）でUI言語を切り替えられます
 - UI言語の設定は Cloudflare SESSION KV に保存され、ユーザーのセッション単位で保持されます
 - 翻訳元言語（sourceLang）は従来通り `localStorage` に保存されます
 
@@ -301,7 +331,7 @@ curl -s -X POST http://localhost:4321/api/reply \
 ## Troubleshooting
 
 - 音声入力ボタンが無効になっている
-  - `SpeechRecognition` / `webkitSpeechRecognition` が必要です。主に Chrome 系ブラウザで利用できます。
+  - `SpeechRecognition` / `webkitSpeechRecognition` が必要です。主に Chrome 系ブラウザで利用できます。非対応時も textarea 内には薄いプレースホルダー風のアイコンが残ります。
 - 読み上げが期待した声で再生されない
   - 利用できる音声はブラウザと OS に依存します。日本語は `ja-JP`、ベトナム語は `vi-VN` を優先して選択します。
 - `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
@@ -317,10 +347,10 @@ curl -s -X POST http://localhost:4321/api/reply \
 
 ## Scripts
 
-- `npm run dev`
-- `npm run build`
-- `npm run preview`
-- `npm run check`
+- `npm run dev` : Astro の開発サーバーを起動
+- `npm run build` : Cloudflare Pages 向けの成果物を `dist/` に生成
+- `npm run preview` : `build` 後の成果物をローカルで確認
+- `npm run check` : Astro / TypeScript のチェックを実行
 
 ## License
 

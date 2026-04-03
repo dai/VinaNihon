@@ -5,16 +5,23 @@ const ui = UI_COPY.ja;
 ---
 
 <section id="translationHistory" class="surface-card panel-card history-card">
-  <div class="history-header">
-    <h2 class="section-heading" data-i18n="historyHeading">{ui.historyHeading}</h2>
-    <button
-      type="button"
-      id="clearHistoryButton"
-      class="action-button"
-      data-i18n="historyClearAll"
-    >
-      {ui.historyClearAll}
-    </button>
+  <div class="history-sticky-shell">
+    <div class="history-header">
+      <h2 class="section-heading" data-i18n="historyHeading">{ui.historyHeading}</h2>
+    </div>
+    <div class="history-clear-row">
+      <p class="history-clear-heading section-subheading" data-i18n="historyActionsHeading">
+        {ui.historyActionsHeading}
+      </p>
+      <button
+        type="button"
+        id="clearHistoryButton"
+        class="action-button"
+        data-i18n="historyClearAll"
+      >
+        {ui.historyClearAll}
+      </button>
+    </div>
   </div>
 
   <p id="historyEmptyState" class="history-empty result-body" data-i18n="historyEmpty">

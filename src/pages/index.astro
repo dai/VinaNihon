@@ -17,9 +17,14 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
 <BaseLayout title={ui.pageTitle} description={ui.pageDescription}>
   <main class="page-shell">
-    <TranslatorForm />
-    <TranslationResult />
-    <TranslationHistory />
+    <section class="main-column">
+      <TranslatorForm />
+      <TranslationResult />
+    </section>
+
+    <aside class="history-column">
+      <TranslationHistory />
+    </aside>
   </main>
   <footer class="site-footer">
     <span data-i18n="footerAuthorLabel">{ui.footerAuthorLabel}</span>
@@ -83,9 +88,6 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
     const historyEmptyState = document.getElementById("historyEmptyState");
     const clearHistoryButton = document.getElementById("clearHistoryButton");
     const copyTimers = new WeakMap();
-    const speakButtons = Array.from(document.querySelectorAll('[data-voice-action="speak"]'));
-    const listenButtons = Array.from(document.querySelectorAll('[data-voice-action="listen"]'));
-    const copyButtons = Array.from(document.querySelectorAll(".copy-button"));
     const i18nNodes = Array.from(document.querySelectorAll("[data-i18n]"));
     const placeholderNodes = Array.from(document.querySelectorAll("[data-i18n-placeholder]"));
     const ariaNodes = Array.from(document.querySelectorAll("[data-i18n-aria-label]"));
@@ -110,6 +112,28 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
     function getUi(locale = currentLocale) {
       return uiCopy[locale] || uiCopy[defaultLocale];
+    }
+
+    function getSpeakButtons() {
+      return Array.from(document.querySelectorAll('[data-voice-action="speak"]'));
+    }
+
+    function getListenButtons() {
+      return Array.from(document.querySelectorAll('[data-voice-action="listen"]'));
+    }
+
+    function getCopyButtons() {
+      return Array.from(document.querySelectorAll(".copy-button"));
+    }
+
+    function getUiText(key, fallback = "") {
+      const ui = getUi();
+      return key && key in ui ? ui[key] : fallback;
+    }
+
+    function setButtonTooltip(button, message) {
+      button.setAttribute("aria-label", message);
+      button.title = message;
     }
 
     function isTheme(value) {
@@ -240,51 +264,31 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
     function updateButtonLabels() {
       const ui = getUi();
 
-      for (const button of speakButtons) {
+      for (const button of getSpeakButtons()) {
         if (!(button instanceof HTMLButtonElement)) {
           continue;
         }
 
         button.dataset.defaultLabel = ui.speakLabel;
-        if (button.classList.contains("is-active")) {
-          button.textContent = ui.stopLabel;
-          button.setAttribute("aria-label", ui.stopLabel);
-          continue;
-        }
-
-        button.textContent = ui.speakLabel;
-        button.setAttribute("aria-label", ui.speakLabel);
+        setVoiceButtonState(button, button.classList.contains("is-active"));
       }
 
-      for (const button of listenButtons) {
+      for (const button of getListenButtons()) {
         if (!(button instanceof HTMLButtonElement)) {
           continue;
         }
 
         button.dataset.defaultLabel = ui.listenLabel;
-        if (button.classList.contains("is-active")) {
-          button.textContent = ui.stopLabel;
-          button.setAttribute("aria-label", ui.stopLabel);
-          continue;
-        }
-
-        button.textContent = ui.listenLabel;
-        button.setAttribute("aria-label", ui.listenLabel);
+        setVoiceButtonState(button, button.classList.contains("is-active"));
       }
 
-      for (const button of copyButtons) {
+      for (const button of getCopyButtons()) {
         if (!(button instanceof HTMLButtonElement)) {
           continue;
         }
 
-        if (button.classList.contains("is-copied")) {
-          button.textContent = ui.copiedLabel;
-          button.setAttribute("aria-label", ui.copiedLabel);
-          continue;
-        }
-
-        button.textContent = ui.copyLabel;
-        button.setAttribute("aria-label", ui.copyLabel);
+        button.dataset.defaultLabel = ui.copyLabel;
+        setCopyButtonState(button, button.classList.contains("is-copied"));
       }
     }
 
@@ -369,11 +373,11 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
         submitButton.textContent = ui.submitIdle;
       }
 
-      updateButtonLabels();
       updateDetailsControls();
       updateThemeToggle();
       updateLocaleToggle();
       renderHistory(historyList);
+      updateButtonLabels();
 
       if (persist) {
         fetch("/api/session-locale", {
@@ -498,6 +502,36 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       return row;
     }
 
+    function getHistoryEntry(id) {
+      return historyList.find((entry) => entry.id === id) || null;
+    }
+
+    function truncatePreview(text, length = 72) {
+      const normalized = String(text || "").replace(/\s+/g, " ").trim();
+      if (!normalized) {
+        return "";
+      }
+      return normalized.length > length ? `${normalized.slice(0, length).trimEnd()}…` : normalized;
+    }
+
+    function setHistoryDisclosureState(detailsElement) {
+      if (!(detailsElement instanceof HTMLDetailsElement)) {
+        return;
+      }
+
+      const summary = detailsElement.querySelector(".history-item-summary");
+      if (!(summary instanceof HTMLElement)) {
+        return;
+      }
+
+      const label = detailsElement.open
+        ? getUi().historyCollapseDetails
+        : getUi().historyExpandDetails;
+
+      summary.setAttribute("aria-label", label);
+      summary.title = label;
+    }
+
     function renderHistory(entries) {
       if (!(historyListElement instanceof HTMLElement) || !(historyEmptyState instanceof HTMLElement)) {
         return;
@@ -512,40 +546,91 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
       const ui = getUi();
 
-      for (const entry of entries) {
-        const article = document.createElement("article");
-        article.className = "history-item";
+      for (const [index, entry] of entries.entries()) {
+        const detailsElement = document.createElement("details");
+        detailsElement.className = "history-item";
+        detailsElement.dataset.historyId = entry.id;
+        detailsElement.dataset.historyParity = index % 2 === 0 ? "even" : "odd";
 
-        const head = document.createElement("div");
-        head.className = "history-item-head";
+        const summary = document.createElement("summary");
+        summary.className = "history-item-summary";
+
+        const summaryMeta = document.createElement("div");
+        summaryMeta.className = "history-item-summary-meta";
 
         const meta = document.createElement("p");
         meta.className = "history-meta";
         meta.textContent = `${ui.historyCreatedAtLabel}: ${formatHistoryTimestamp(entry.createdAt)}`;
 
-        const actions = document.createElement("div");
-        actions.className = "action-group flex flex-wrap items-center gap-2";
+        const preview = document.createElement("p");
+        preview.className = "history-preview result-body";
+        preview.textContent = truncatePreview(entry.mainTranslation || entry.text);
+
+        summaryMeta.append(meta, preview);
+
+        const direction = document.createElement("p");
+        direction.className = "history-direction";
+        direction.textContent = `${ui.languageOptions[entry.sourceLang]} → ${ui.languageOptions[entry.targetLang]}`;
+
+        summary.append(summaryMeta, direction);
+
+        const toolbar = document.createElement("div");
+        toolbar.className = "history-item-toolbar";
+        toolbar.setAttribute("role", "toolbar");
+        toolbar.setAttribute("aria-label", ui.historyActionsHeading);
 
         const reuseButton = document.createElement("button");
         reuseButton.type = "button";
-        reuseButton.className = "action-button";
+        reuseButton.className = "history-toolbar-button icon-action-button";
         reuseButton.dataset.historyAction = "reuse";
         reuseButton.dataset.historyId = entry.id;
-        reuseButton.textContent = ui.historyReuse;
+        reuseButton.textContent = "↩";
+        setButtonTooltip(reuseButton, ui.tooltipHistoryReuse);
+
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "copy-button history-toolbar-button icon-action-button";
+        copyButton.dataset.copyKind = "history";
+        copyButton.dataset.historyId = entry.id;
+        copyButton.dataset.defaultLabel = ui.copyLabel;
+        copyButton.dataset.copiedLabelKey = "copiedLabel";
+        copyButton.dataset.iconIdle = "⧉";
+        copyButton.dataset.iconCopied = "✓";
+        copyButton.dataset.tooltipIdleKey = "tooltipHistoryCopy";
+        copyButton.dataset.tooltipCopiedKey = "copiedLabel";
+        copyButton.textContent = "⧉";
+        setButtonTooltip(copyButton, ui.tooltipHistoryCopy);
+
+        const speakButton = document.createElement("button");
+        speakButton.type = "button";
+        speakButton.className = "voice-button history-toolbar-button icon-action-button";
+        speakButton.dataset.voiceAction = "speak";
+        speakButton.dataset.speakKind = "history";
+        speakButton.dataset.historyId = entry.id;
+        speakButton.dataset.defaultLabel = ui.speakLabel;
+        speakButton.dataset.iconIdle = "🔊";
+        speakButton.dataset.iconActive = "⏹";
+        speakButton.dataset.tooltipIdleKey = "tooltipHistorySpeak";
+        speakButton.dataset.tooltipActiveKey = "stopLabel";
+        speakButton.textContent = "🔊";
+        setButtonTooltip(speakButton, ui.tooltipHistorySpeak);
 
         const deleteButton = document.createElement("button");
         deleteButton.type = "button";
-        deleteButton.className = "action-button";
+        deleteButton.className = "history-toolbar-button icon-action-button is-destructive";
         deleteButton.dataset.historyAction = "delete";
         deleteButton.dataset.historyId = entry.id;
-        deleteButton.textContent = ui.historyDelete;
+        deleteButton.textContent = "🗑";
+        setButtonTooltip(deleteButton, ui.tooltipHistoryDelete);
 
-        actions.append(reuseButton, deleteButton);
-        head.append(meta, actions);
+        toolbar.append(reuseButton, copyButton, speakButton, deleteButton);
 
-        const details = document.createElement("dl");
-        details.className = "history-grid";
-        details.append(
+        const body = document.createElement("div");
+        body.className = "history-item-body";
+
+        const detailsGrid = document.createElement("dl");
+        detailsGrid.className = "history-grid";
+        detailsGrid.append(
           createHistoryRow(ui.historySourceLabel, entry.text),
           createHistoryRow(ui.historyTargetLabel, entry.mainTranslation),
           createHistoryRow(ui.sourceLangLabel, ui.languageOptions[entry.sourceLang]),
@@ -554,8 +639,13 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
           createHistoryRow(ui.toneLabel, ui.toneOptions[entry.tone])
         );
 
-        article.append(head, details);
-        historyListElement.appendChild(article);
+        body.append(detailsGrid);
+        detailsElement.append(summary, toolbar, body);
+        detailsElement.addEventListener("toggle", () => {
+          setHistoryDisclosureState(detailsElement);
+        });
+        setHistoryDisclosureState(detailsElement);
+        historyListElement.appendChild(detailsElement);
       }
     }
 
@@ -569,6 +659,8 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
       historyList = nextEntries;
       renderHistory(historyList);
+      updateButtonLabels();
+      setupVoiceControls();
     }
 
     function deleteHistoryEntry(id) {
@@ -584,6 +676,8 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
       historyList = nextEntries;
       renderHistory(historyList);
+      updateButtonLabels();
+      setupVoiceControls();
     }
 
     function clearHistory() {
@@ -598,6 +692,8 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
       historyList = [];
       renderHistory(historyList);
+      updateButtonLabels();
+      setupVoiceControls();
     }
 
     function reuseHistoryEntry(id) {
@@ -660,6 +756,8 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
     }
 
     function getCopyText(kind) {
+      const button = arguments.length > 1 ? arguments[1] : null;
+
       if (kind === "source") {
         return sourceText.value.trim();
       }
@@ -680,23 +778,56 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
         return listToText(suggestedRepliesList);
       }
 
+      if (kind === "history" && button instanceof HTMLButtonElement) {
+        const entry = getHistoryEntry(button.dataset.historyId || "");
+        return entry?.mainTranslation?.trim() || "";
+      }
+
       return "";
     }
 
     function getSpeechLanguage(kind) {
+      const button = arguments.length > 1 ? arguments[1] : null;
+
       const language =
         kind === "source" ? speechLanguageMap[sourceLang.value] : speechLanguageMap[targetLang.value];
+
+      if (kind === "history" && button instanceof HTMLButtonElement) {
+        const entry = getHistoryEntry(button.dataset.historyId || "");
+        const historyLanguage = entry ? speechLanguageMap[entry.targetLang] : null;
+        return historyLanguage || "ja-JP";
+      }
 
       return language || "ja-JP";
     }
 
     function setVoiceButtonState(button, isActive) {
-      const ui = getUi();
       const defaultLabel = button.dataset.defaultLabel || "";
+      const visualLabel = isActive
+        ? button.dataset.iconActive || getUi().stopLabel
+        : button.dataset.iconIdle || defaultLabel;
+      const tooltipLabel = isActive
+        ? getUiText(button.dataset.tooltipActiveKey, getUi().stopLabel)
+        : getUiText(button.dataset.tooltipIdleKey, defaultLabel);
 
-      button.textContent = isActive ? ui.stopLabel : defaultLabel;
-      button.setAttribute("aria-label", isActive ? ui.stopLabel : defaultLabel);
+      button.textContent = visualLabel;
+      setButtonTooltip(button, tooltipLabel);
       button.classList.toggle("is-active", isActive);
+    }
+
+    function setCopyButtonState(button, isCopied) {
+      const defaultLabel = button.dataset.defaultLabel || getUi().copyLabel;
+      const copiedLabel = getUiText(button.dataset.copiedLabelKey, getUi().copiedLabel);
+      const visualLabel = isCopied
+        ? button.dataset.iconCopied || copiedLabel
+        : button.dataset.iconIdle || defaultLabel;
+      const tooltipLabel = isCopied
+        ? getUiText(button.dataset.tooltipCopiedKey, copiedLabel)
+        : getUiText(button.dataset.tooltipIdleKey, defaultLabel);
+
+      button.textContent = visualLabel;
+      setButtonTooltip(button, tooltipLabel);
+      button.classList.toggle("is-copied", isCopied);
     }
 
     function resetActiveSpeakButton() {
@@ -800,7 +931,7 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
         return;
       }
 
-      const text = getCopyText(kind);
+      const text = getCopyText(kind, button);
       if (!text) {
         setError(ui.errorSpeakEmpty);
         return;
@@ -810,7 +941,7 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       stopSpeaking();
 
       const utterance = new SpeechSynthesisUtterance(text);
-      const language = getSpeechLanguage(kind);
+      const language = getSpeechLanguage(kind, button);
       const preferredVoice = getPreferredVoice(language);
 
       utterance.lang = language;
@@ -905,13 +1036,13 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
       setVoiceStatus("");
 
-      for (const button of speakButtons) {
+      for (const button of getSpeakButtons()) {
         if (button instanceof HTMLButtonElement) {
           button.disabled = !canSpeak;
         }
       }
 
-      for (const button of listenButtons) {
+      for (const button of getListenButtons()) {
         if (button instanceof HTMLButtonElement) {
           button.disabled = !canListen;
         }
@@ -932,6 +1063,23 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
       }
     }
 
+    async function handleCopyButton(button) {
+      const copyKind = button.dataset.copyKind || "";
+      const copyText = getCopyText(copyKind, button);
+      if (!copyText) {
+        setError(getUi().errorCopyEmpty);
+        return;
+      }
+
+      try {
+        await writeClipboard(copyText);
+        setError("");
+        flashCopiedState(button);
+      } catch {
+        setError(getUi().errorCopyFailed);
+      }
+    }
+
     async function writeClipboard(text) {
       if (!navigator.clipboard || !window.isSecureContext) {
         throw new Error("clipboard_unavailable");
@@ -946,15 +1094,10 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
         clearTimeout(previousTimer);
       }
 
-      const ui = getUi();
-      button.textContent = ui.copiedLabel;
-      button.setAttribute("aria-label", ui.copiedLabel);
-      button.classList.add("is-copied");
+      setCopyButtonState(button, true);
 
       const nextTimer = setTimeout(() => {
-        button.textContent = ui.copyLabel;
-        button.setAttribute("aria-label", ui.copyLabel);
-        button.classList.remove("is-copied");
+        setCopyButtonState(button, false);
         copyTimers.delete(button);
       }, 1200);
 
@@ -1135,24 +1278,11 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
         return;
       }
 
-      const copyKind = button.dataset.copyKind || "";
-      const copyText = getCopyText(copyKind);
-      if (!copyText) {
-        setError(getUi().errorCopyEmpty);
-        return;
-      }
-
-      try {
-        await writeClipboard(copyText);
-        setError("");
-        flashCopiedState(button);
-      } catch {
-        setError(getUi().errorCopyFailed);
-      }
+      await handleCopyButton(button);
     });
 
     if (historySection instanceof HTMLElement) {
-      historySection.addEventListener("click", (event) => {
+      historySection.addEventListener("click", async (event) => {
         const target = event.target;
         if (!(target instanceof Element)) {
           return;
@@ -1160,6 +1290,19 @@ const emptyListValues = Object.values(UI_COPY).map((copy) => copy.emptyList);
 
         if (target.closest("#clearHistoryButton")) {
           clearHistory();
+          return;
+        }
+
+        const voiceButton = target.closest('[data-voice-action="speak"]');
+        if (voiceButton instanceof HTMLButtonElement) {
+          const speakKind = voiceButton.dataset.speakKind || "";
+          await speakText(voiceButton, speakKind);
+          return;
+        }
+
+        const copyButton = target.closest(".copy-button");
+        if (copyButton instanceof HTMLButtonElement) {
+          await handleCopyButton(copyButton);
           return;
         }
 

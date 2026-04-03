@@ -53,9 +53,14 @@ export interface UiCopy {
   historyHeading: string;
   historyEmpty: string;
   historyReuse: string;
+  historyCopy: string;
+  historySpeak: string;
   historyDelete: string;
   historyClearAll: string;
+  historyActionsHeading: string;
   historyConfirmClearAll: string;
+  historyExpandDetails: string;
+  historyCollapseDetails: string;
   historySourceLabel: string;
   historyTargetLabel: string;
   historyCreatedAtLabel: string;
@@ -65,6 +70,20 @@ export interface UiCopy {
   speakLabel: string;
   stopLabel: string;
   listenLabel: string;
+  tooltipSourceSpeak: string;
+  tooltipSourceListen: string;
+  tooltipMainSpeak: string;
+  tooltipMainCopy: string;
+  tooltipAlternativesSpeak: string;
+  tooltipAlternativesCopy: string;
+  tooltipNuanceSpeak: string;
+  tooltipNuanceCopy: string;
+  tooltipRepliesSpeak: string;
+  tooltipRepliesCopy: string;
+  tooltipHistoryReuse: string;
+  tooltipHistoryCopy: string;
+  tooltipHistoryDelete: string;
+  tooltipHistorySpeak: string;
   themeToggleToDark: string;
   themeToggleToLight: string;
   themeToggleToDarkAria: string;
@@ -141,9 +160,14 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     historyHeading: "履歴",
     historyEmpty: "履歴はまだありません。",
     historyReuse: "再入力",
+    historyCopy: "コピー",
+    historySpeak: "読み上げ",
     historyDelete: "削除",
     historyClearAll: "全件削除",
+    historyActionsHeading: "履歴操作",
     historyConfirmClearAll: "履歴をすべて削除しますか？",
+    historyExpandDetails: "履歴の詳細を開く",
+    historyCollapseDetails: "履歴の詳細を閉じる",
     historySourceLabel: "原文",
     historyTargetLabel: "主翻訳",
     historyCreatedAtLabel: "日時",
@@ -153,6 +177,20 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     speakLabel: "読み上げ",
     stopLabel: "停止",
     listenLabel: "音声入力",
+    tooltipSourceSpeak: "入力文を読み上げる",
+    tooltipSourceListen: "音声入力を開始する",
+    tooltipMainSpeak: "主翻訳を読み上げる",
+    tooltipMainCopy: "主翻訳をコピーする",
+    tooltipAlternativesSpeak: "言い換え候補を読み上げる",
+    tooltipAlternativesCopy: "言い換え候補をコピーする",
+    tooltipNuanceSpeak: "ニュアンスメモを読み上げる",
+    tooltipNuanceCopy: "ニュアンスメモをコピーする",
+    tooltipRepliesSpeak: "返信例を読み上げる",
+    tooltipRepliesCopy: "返信例をコピーする",
+    tooltipHistoryReuse: "この履歴を再入力する",
+    tooltipHistoryCopy: "この履歴の主翻訳をコピーする",
+    tooltipHistoryDelete: "この履歴を削除する",
+    tooltipHistorySpeak: "この履歴の主翻訳を読み上げる",
     themeToggleToDark: "ダークモード",
     themeToggleToLight: "ライトモード",
     themeToggleToDarkAria: "ダークモードに切り替える",
@@ -225,9 +263,14 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     historyHeading: "Lịch sử",
     historyEmpty: "Chưa có lịch sử.",
     historyReuse: "Dùng lại",
+    historyCopy: "Sao chép",
+    historySpeak: "Đọc",
     historyDelete: "Xóa",
     historyClearAll: "Xóa tất cả",
+    historyActionsHeading: "Tác vụ lịch sử",
     historyConfirmClearAll: "Bạn có muốn xóa toàn bộ lịch sử không?",
+    historyExpandDetails: "Mở chi tiết lịch sử",
+    historyCollapseDetails: "Thu gọn chi tiết lịch sử",
     historySourceLabel: "Văn bản gốc",
     historyTargetLabel: "Bản dịch chính",
     historyCreatedAtLabel: "Thời gian",
@@ -237,6 +280,20 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     speakLabel: "Đọc",
     stopLabel: "Dừng",
     listenLabel: "Nhập giọng nói",
+    tooltipSourceSpeak: "Đọc văn bản đã nhập",
+    tooltipSourceListen: "Bắt đầu nhập bằng giọng nói",
+    tooltipMainSpeak: "Đọc bản dịch chính",
+    tooltipMainCopy: "Sao chép bản dịch chính",
+    tooltipAlternativesSpeak: "Đọc các cách diễn đạt khác",
+    tooltipAlternativesCopy: "Sao chép các cách diễn đạt khác",
+    tooltipNuanceSpeak: "Đọc ghi chú sắc thái",
+    tooltipNuanceCopy: "Sao chép ghi chú sắc thái",
+    tooltipRepliesSpeak: "Đọc gợi ý phản hồi",
+    tooltipRepliesCopy: "Sao chép gợi ý phản hồi",
+    tooltipHistoryReuse: "Điền lại mục lịch sử này",
+    tooltipHistoryCopy: "Sao chép bản dịch chính của mục này",
+    tooltipHistoryDelete: "Xóa mục lịch sử này",
+    tooltipHistorySpeak: "Đọc bản dịch chính của mục này",
     themeToggleToDark: "Chế độ tối",
     themeToggleToLight: "Chế độ sáng",
     themeToggleToDarkAria: "Chuyển sang chế độ tối",

@@ -10,11 +10,28 @@ const ui = UI_COPY.ja;
       <h1 class="title-heading text-balance">VinaNihon</h1>
       <p id="appSubtitle" class="title-subheading text-balance" data-i18n="appSubtitle">{ui.appSubtitle}</p>
     </div>
-    <div class="flex items-center gap-3">
-      <a href="https://github.com/dai" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="text-muted-foreground hover:text-foreground transition">
+    <div class="hero-actions">
+      <button
+        type="button"
+        id="themeToggle"
+        class="theme-toggle action-button"
+        data-theme-toggle
+        data-i18n-toggle-light="themeToggleToDark"
+        data-i18n-toggle-dark="themeToggleToLight"
+        data-i18n-aria-light="themeToggleToDarkAria"
+        data-i18n-aria-dark="themeToggleToLightAria"
+        aria-label="テーマを切り替える"
+      >
+        ダークモード
+      </button>
+      <div id="localeToggle" class="locale-toggle" role="group" aria-label="UI Language">
+        <button type="button" class="locale-toggle-segment" data-locale="ja" aria-pressed="true" title="日本語に変更します。">🇯🇵</button>
+        <button type="button" class="locale-toggle-segment" data-locale="vi" aria-pressed="false" title="ベトナム語に変更します。">🇻🇳</button>
+      </div>
+      <a href="https://github.com/dai" target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="social-badge-link text-muted-foreground hover:text-foreground transition">
         <img src="https://img.shields.io/github/followers/dai" alt="GitHub followers" height="20" style="display: block;">
       </a>
-      <a href="https://x.com/daisuke" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)" class="text-muted-foreground hover:text-foreground transition">
+      <a href="https://x.com/daisuke" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)" class="social-badge-link text-muted-foreground hover:text-foreground transition">
         <img src="https://img.shields.io/twitter/follow/daisuke" alt="X (Twitter) followers" height="20" style="display: block;">
       </a>
     </div>
@@ -48,18 +65,56 @@ const ui = UI_COPY.ja;
     </label>
   </div>
 
-  <label class="field">
-    <span class="field-label" data-i18n="textLabel">{ui.textLabel}</span>
-    <textarea
-      id="sourceText"
-      name="text"
-      rows="6"
-      placeholder={ui.textPlaceholder}
-      data-i18n-placeholder="textPlaceholder"
-      class="form-control source-textarea"
-      required
-    ></textarea>
-  </label>
+  <div class="field">
+    <label for="sourceText" class="field-label" data-i18n="textLabel">{ui.textLabel}</label>
+    <div class="textarea-field">
+      <textarea
+        id="sourceText"
+        name="text"
+        rows="6"
+        placeholder={ui.textPlaceholder}
+        data-i18n-placeholder="textPlaceholder"
+        class="form-control source-textarea"
+        required
+      ></textarea>
+      <div class="textarea-voice-actions">
+        <button
+          type="button"
+          class="voice-button voice-overlay-button"
+          data-voice-action="speak"
+          data-speak-kind="source"
+          data-default-label-key="speakLabel"
+          data-default-label={ui.speakLabel}
+          data-icon-idle="🔊"
+          data-icon-active="⏹"
+          data-tooltip-idle-key="tooltipSourceSpeak"
+          data-tooltip-active-key="stopLabel"
+          aria-label={ui.speakLabel}
+          title={ui.tooltipSourceSpeak}
+          disabled
+        >
+          🔊
+        </button>
+        <button
+          type="button"
+          class="voice-button voice-overlay-button"
+          id="sourceListenButton"
+          data-voice-action="listen"
+          data-default-label-key="listenLabel"
+          data-default-label={ui.listenLabel}
+          data-icon-idle="🎙"
+          data-icon-active="⏹"
+          data-tooltip-idle-key="tooltipSourceListen"
+          data-tooltip-active-key="stopLabel"
+          aria-label={ui.listenLabel}
+          title={ui.tooltipSourceListen}
+          disabled
+        >
+          🎙
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="grid gap-3 sm:grid-cols-2">
     <label class="field">
@@ -93,33 +148,6 @@ const ui = UI_COPY.ja;
   >
     {ui.submitIdle}
   </button>
-
-  <div class="voice-form-controls flex flex-wrap gap-2 mt-3">
-    <button
-      type="button"
-      class="voice-button action-button"
-      data-voice-action="speak"
-      data-speak-kind="source"
-      data-default-label-key="speakLabel"
-      data-default-label={ui.speakLabel}
-      aria-label={ui.speakLabel}
-      disabled
-    >
-      {ui.speakLabel}
-    </button>
-    <button
-      type="button"
-      class="voice-button action-button"
-      id="sourceListenButton"
-      data-voice-action="listen"
-      data-default-label-key="listenLabel"
-      data-default-label={ui.listenLabel}
-      aria-label={ui.listenLabel}
-      disabled
-    >
-      {ui.listenLabel}
-    </button>
-  </div>
 
   <p id="formStatus" class="status-line text-sm text-muted-foreground" aria-live="polite"></p>
   <p id="voiceStatus" class="status-line text-sm text-muted-foreground" aria-live="polite"></p>
