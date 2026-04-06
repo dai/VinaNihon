@@ -80,6 +80,7 @@ export interface UiCopy {
   tooltipNuanceCopy: string;
   tooltipRepliesSpeak: string;
   tooltipRepliesCopy: string;
+  tooltipLineShare: string;
   tooltipHistoryReuse: string;
   tooltipHistoryCopy: string;
   tooltipHistoryDelete: string;
@@ -187,6 +188,7 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     tooltipNuanceCopy: "ニュアンスメモをコピーする",
     tooltipRepliesSpeak: "返信例を読み上げる",
     tooltipRepliesCopy: "返信例をコピーする",
+    tooltipLineShare: "LINEに送る",
     tooltipHistoryReuse: "この履歴を再入力する",
     tooltipHistoryCopy: "この履歴の主翻訳をコピーする",
     tooltipHistoryDelete: "この履歴を削除する",
@@ -290,6 +292,7 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     tooltipNuanceCopy: "Sao chép ghi chú sắc thái",
     tooltipRepliesSpeak: "Đọc gợi ý phản hồi",
     tooltipRepliesCopy: "Sao chép gợi ý phản hồi",
+    tooltipLineShare: "Gửi qua LINE",
     tooltipHistoryReuse: "Điền lại mục lịch sử này",
     tooltipHistoryCopy: "Sao chép bản dịch chính của mục này",
     tooltipHistoryDelete: "Xóa mục lịch sử này",

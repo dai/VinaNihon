@@ -203,11 +203,9 @@ function updateThemeToggle() {
   }
 
   const ui = getUi();
-  const nextLabel = currentTheme === "dark" ? ui.themeToggleToLight : ui.themeToggleToDark;
   const nextAria =
     currentTheme === "dark" ? ui.themeToggleToLightAria : ui.themeToggleToDarkAria;
 
-  themeToggle.textContent = nextLabel;
   themeToggle.setAttribute("aria-label", nextAria);
 }
 
@@ -1082,6 +1080,17 @@ function flashCopiedState(button: HTMLButtonElement) {
   copyTimers.set(button, nextTimer);
 }
 
+function handleLineButton(button: HTMLButtonElement) {
+  const copyKind = button.dataset.copyKind || "";
+  const text = getCopyText(copyKind, button);
+  if (!text) return;
+
+  const pageUrl = window.location.href;
+  const shareText = `${text}`;
+  const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(shareText)}`;
+  window.open(lineUrl, "_blank", "noopener,noreferrer,width=600,height=480");
+}
+
 async function parseResponse(response: Response): Promise<Record<string, unknown> | null> {
   let payload: Record<string, unknown> | null = null;
 
@@ -1263,6 +1272,19 @@ resultCard?.addEventListener("click", async (event) => {
   }
 
   await handleCopyButton(button);
+});
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+
+  const lineButton = target.closest("[data-line-share]");
+  if (lineButton instanceof HTMLButtonElement) {
+    handleLineButton(lineButton);
+    return;
+  }
 });
 
 if (historySection) {

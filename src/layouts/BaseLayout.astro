@@ -101,5 +101,14 @@ const {
   </head>
   <body class="min-h-dvh">
     <slot />
+
+    <!-- LINE SDK loader -->
+    <script
+      is:inline
+      src="https://www.line-website.com/social-plugins/js/thirdparty/loader.min.js"
+      async="async"
+      defer="defer"
+      data-lazy-load="true"
+    ></script>
   </body>
 </html>
