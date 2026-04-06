@@ -1219,10 +1219,14 @@ themeToggle?.addEventListener("click", () => {
 
 localeToggle?.addEventListener("click", (event) => {
   const target = event.target;
-  if (!(target instanceof HTMLButtonElement) || !target.dataset.locale) {
+  if (!(target instanceof Element)) {
     return;
   }
-  applyLocale(target.dataset.locale, true);
+  const button = target.closest("[data-locale]");
+  if (!(button instanceof HTMLButtonElement) || !button.dataset.locale) {
+    return;
+  }
+  applyLocale(button.dataset.locale, true);
 });
 
 form?.addEventListener("click", async (event) => {
