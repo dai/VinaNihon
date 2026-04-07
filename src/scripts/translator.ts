@@ -1080,14 +1080,23 @@ function flashCopiedState(button: HTMLButtonElement) {
   copyTimers.set(button, nextTimer);
 }
 
-function handleLineButton(button: HTMLButtonElement) {
+async function handleLineButton(button: HTMLButtonElement) {
   const copyKind = button.dataset.copyKind || "";
   const text = getCopyText(copyKind, button);
   if (!text) return;
 
-  const pageUrl = window.location.href;
-  const shareText = `${text}`;
-  const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(shareText)}`;
+  // Try Web Share API first (native share sheet on iOS/Android)
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+      return;
+    } catch {
+      // User cancelled or share failed, fall through to LINE URL
+    }
+  }
+
+  // Fallback: open LINE share URL with text as message
+  const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(text)}`;
   window.open(lineUrl, "_blank", "noopener,noreferrer,width=600,height=480");
 }
 
