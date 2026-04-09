@@ -632,7 +632,16 @@ function renderHistory(entries: typeof historyList) {
       deleteButton.textContent = "🗑";
       setButtonTooltip(deleteButton, ui.tooltipHistoryDelete);
 
-      toolbar.append(reuseButton, copyButton, speakButton, deleteButton);
+      const lineButton = document.createElement("button");
+      lineButton.type = "button";
+      lineButton.className = "line-button history-toolbar-button";
+      lineButton.dataset.lineShare = "";
+      lineButton.dataset.copyKind = "history";
+      lineButton.dataset.historyId = entry.id;
+      lineButton.textContent = "LINE";
+      setButtonTooltip(lineButton, ui.tooltipLineShare);
+
+      toolbar.append(reuseButton, copyButton, speakButton, lineButton, deleteButton);
 
       const body = document.createElement("div");
       body.className = "history-item-body";
@@ -1123,8 +1132,11 @@ async function handleLineButton(button: HTMLButtonElement) {
   const text = getCopyText(copyKind, button);
   if (!text) return;
 
-  // Try Web Share API first (native share sheet on iOS/Android)
-  if (navigator.share) {
+  // Mobile detection for Web Share API
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  // Use Web Share API on mobile (native sheet shows app picker including LINE)
+  if (isMobile && navigator.share) {
     try {
       await navigator.share({ text });
       return;
@@ -1133,7 +1145,7 @@ async function handleLineButton(button: HTMLButtonElement) {
     }
   }
 
-  // Fallback: open LINE share URL with text as message
+  // Desktop or fallback: open LINE share URL directly
   const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(text)}`;
   window.open(lineUrl, "_blank", "noopener,noreferrer,width=600,height=480");
 }
