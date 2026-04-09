@@ -421,6 +421,18 @@ function formatHistoryTimestamp(createdAt: string) {
   }).format(date);
 }
 
+function getHistoryDateKey(createdAt: string) {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) {
+    return createdAt;
+  }
+
+  const locale = currentLocale === "vi" ? "vi-VN" : "ja-JP";
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "long"
+  }).format(date);
+}
+
 function createHistoryEntry(
   payload: { sourceLang: string; targetLang: string; text: string; mode: string; tone: string },
   translateData: { mainTranslation?: string }
@@ -521,106 +533,132 @@ function renderHistory(entries: typeof historyList) {
 
   const ui = getUi();
 
-  for (const [index, entry] of entries.entries()) {
-    const detailsElement = document.createElement("details");
-    detailsElement.className = "history-item";
-    detailsElement.dataset.historyId = entry.id;
-    detailsElement.dataset.historyParity = index % 2 === 0 ? "even" : "odd";
+  // Group entries by date
+  const dateGroups = new Map<string, typeof entries>();
+  for (const entry of entries) {
+    const dateKey = getHistoryDateKey(entry.createdAt);
+    if (!dateGroups.has(dateKey)) {
+      dateGroups.set(dateKey, []);
+    }
+    dateGroups.get(dateKey)!.push(entry);
+  }
+
+  for (const [dateKey, dateEntries] of dateGroups) {
+    const dateGroup = document.createElement("details");
+    dateGroup.className = "history-date-group";
+    dateGroup.open = true;
 
     const summary = document.createElement("summary");
-    summary.className = "history-item-summary";
+    summary.textContent = dateKey;
 
-    const summaryMeta = document.createElement("div");
-    summaryMeta.className = "history-item-summary-meta";
+    const itemsContainer = document.createElement("div");
+    itemsContainer.className = "history-date-items";
 
-    const meta = document.createElement("p");
-    meta.className = "history-meta";
-    meta.textContent = `${ui.historyCreatedAtLabel}: ${formatHistoryTimestamp(entry.createdAt)}`;
+    for (const [index, entry] of dateEntries.entries()) {
+      const detailsElement = document.createElement("details");
+      detailsElement.className = "history-item";
+      detailsElement.dataset.historyId = entry.id;
+      detailsElement.dataset.historyParity = index % 2 === 0 ? "even" : "odd";
+      detailsElement.open = true;
 
-    const preview = document.createElement("p");
-    preview.className = "history-preview result-body";
-    preview.textContent = truncatePreview(entry.mainTranslation || entry.text);
+      const summaryEl = document.createElement("summary");
+      summaryEl.className = "history-item-summary";
 
-    summaryMeta.append(meta, preview);
+      const summaryMeta = document.createElement("div");
+      summaryMeta.className = "history-item-summary-meta";
 
-    const direction = document.createElement("p");
-    direction.className = "history-direction";
-    direction.textContent = `${ui.languageOptions[entry.sourceLang as "ja" | "vi"]} → ${ui.languageOptions[entry.targetLang as "ja" | "vi"]}`;
+      const meta = document.createElement("p");
+      meta.className = "history-meta";
+      meta.textContent = `${ui.historyCreatedAtLabel}: ${formatHistoryTimestamp(entry.createdAt)}`;
 
-    summary.append(summaryMeta, direction);
+      const preview = document.createElement("p");
+      preview.className = "history-preview result-body";
+      preview.textContent = truncatePreview(entry.mainTranslation || entry.text);
 
-    const toolbar = document.createElement("div");
-    toolbar.className = "history-item-toolbar";
-    toolbar.setAttribute("role", "toolbar");
-    toolbar.setAttribute("aria-label", ui.historyActionsHeading);
+      summaryMeta.append(meta, preview);
 
-    const reuseButton = document.createElement("button");
-    reuseButton.type = "button";
-    reuseButton.className = "history-toolbar-button icon-action-button";
-    reuseButton.dataset.historyAction = "reuse";
-    reuseButton.dataset.historyId = entry.id;
-    reuseButton.textContent = "↩";
-    setButtonTooltip(reuseButton, ui.tooltipHistoryReuse);
+      const direction = document.createElement("p");
+      direction.className = "history-direction";
+      direction.textContent = `${ui.languageOptions[entry.sourceLang as "ja" | "vi"]} → ${ui.languageOptions[entry.targetLang as "ja" | "vi"]}`;
 
-    const copyButton = document.createElement("button");
-    copyButton.type = "button";
-    copyButton.className = "copy-button history-toolbar-button icon-action-button";
-    copyButton.dataset.copyKind = "history";
-    copyButton.dataset.historyId = entry.id;
-    copyButton.dataset.defaultLabel = ui.copyLabel;
-    copyButton.dataset.copiedLabelKey = "copiedLabel";
-    copyButton.dataset.iconIdle = "⧉";
-    copyButton.dataset.iconCopied = "✓";
-    copyButton.dataset.tooltipIdleKey = "tooltipHistoryCopy";
-    copyButton.dataset.tooltipCopiedKey = "copiedLabel";
-    copyButton.textContent = "⧉";
-    setButtonTooltip(copyButton, ui.tooltipHistoryCopy);
+      summaryEl.append(summaryMeta, direction);
 
-    const speakButton = document.createElement("button");
-    speakButton.type = "button";
-    speakButton.className = "voice-button history-toolbar-button icon-action-button";
-    speakButton.dataset.voiceAction = "speak";
-    speakButton.dataset.speakKind = "history";
-    speakButton.dataset.historyId = entry.id;
-    speakButton.dataset.defaultLabel = ui.speakLabel;
-    speakButton.dataset.iconIdle = "🔊";
-    speakButton.dataset.iconActive = "⏹";
-    speakButton.dataset.tooltipIdleKey = "tooltipHistorySpeak";
-    speakButton.dataset.tooltipActiveKey = "stopLabel";
-    speakButton.textContent = "🔊";
-    setButtonTooltip(speakButton, ui.tooltipHistorySpeak);
+      const toolbar = document.createElement("div");
+      toolbar.className = "history-item-toolbar";
+      toolbar.setAttribute("role", "toolbar");
+      toolbar.setAttribute("aria-label", ui.historyActionsHeading);
 
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "history-toolbar-button icon-action-button is-destructive";
-    deleteButton.dataset.historyAction = "delete";
-    deleteButton.dataset.historyId = entry.id;
-    deleteButton.textContent = "🗑";
-    setButtonTooltip(deleteButton, ui.tooltipHistoryDelete);
+      const reuseButton = document.createElement("button");
+      reuseButton.type = "button";
+      reuseButton.className = "history-toolbar-button icon-action-button";
+      reuseButton.dataset.historyAction = "reuse";
+      reuseButton.dataset.historyId = entry.id;
+      reuseButton.textContent = "↩";
+      setButtonTooltip(reuseButton, ui.tooltipHistoryReuse);
 
-    toolbar.append(reuseButton, copyButton, speakButton, deleteButton);
+      const copyButton = document.createElement("button");
+      copyButton.type = "button";
+      copyButton.className = "copy-button history-toolbar-button icon-action-button";
+      copyButton.dataset.copyKind = "history";
+      copyButton.dataset.historyId = entry.id;
+      copyButton.dataset.defaultLabel = ui.copyLabel;
+      copyButton.dataset.copiedLabelKey = "copiedLabel";
+      copyButton.dataset.iconIdle = "⧉";
+      copyButton.dataset.iconCopied = "✓";
+      copyButton.dataset.tooltipIdleKey = "tooltipHistoryCopy";
+      copyButton.dataset.tooltipCopiedKey = "copiedLabel";
+      copyButton.textContent = "⧉";
+      setButtonTooltip(copyButton, ui.tooltipHistoryCopy);
 
-    const body = document.createElement("div");
-    body.className = "history-item-body";
+      const speakButton = document.createElement("button");
+      speakButton.type = "button";
+      speakButton.className = "voice-button history-toolbar-button icon-action-button";
+      speakButton.dataset.voiceAction = "speak";
+      speakButton.dataset.speakKind = "history";
+      speakButton.dataset.historyId = entry.id;
+      speakButton.dataset.defaultLabel = ui.speakLabel;
+      speakButton.dataset.iconIdle = "🔊";
+      speakButton.dataset.iconActive = "⏹";
+      speakButton.dataset.tooltipIdleKey = "tooltipHistorySpeak";
+      speakButton.dataset.tooltipActiveKey = "stopLabel";
+      speakButton.textContent = "🔊";
+      setButtonTooltip(speakButton, ui.tooltipHistorySpeak);
 
-    const detailsGrid = document.createElement("dl");
-    detailsGrid.className = "history-grid";
-    detailsGrid.append(
-      createHistoryRow(ui.historySourceLabel, entry.text),
-      createHistoryRow(ui.historyTargetLabel, entry.mainTranslation),
-      createHistoryRow(ui.sourceLangLabel, ui.languageOptions[entry.sourceLang as "ja" | "vi"]),
-      createHistoryRow(ui.targetLangLabel, ui.languageOptions[entry.targetLang as "ja" | "vi"]),
-      createHistoryRow(ui.modeLabel, ui.modeOptions[entry.mode as "daily" | "work" | "customer-service" | "hospital"]),
-      createHistoryRow(ui.toneLabel, ui.toneOptions[entry.tone as "casual" | "normal" | "polite"])
-    );
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "history-toolbar-button icon-action-button is-destructive";
+      deleteButton.dataset.historyAction = "delete";
+      deleteButton.dataset.historyId = entry.id;
+      deleteButton.textContent = "🗑";
+      setButtonTooltip(deleteButton, ui.tooltipHistoryDelete);
 
-    body.append(detailsGrid);
-    detailsElement.append(summary, toolbar, body);
-    detailsElement.addEventListener("toggle", () => {
+      toolbar.append(reuseButton, copyButton, speakButton, deleteButton);
+
+      const body = document.createElement("div");
+      body.className = "history-item-body";
+
+      const detailsGrid = document.createElement("dl");
+      detailsGrid.className = "history-grid";
+      detailsGrid.append(
+        createHistoryRow(ui.historySourceLabel, entry.text),
+        createHistoryRow(ui.historyTargetLabel, entry.mainTranslation),
+        createHistoryRow(ui.sourceLangLabel, ui.languageOptions[entry.sourceLang as "ja" | "vi"]),
+        createHistoryRow(ui.targetLangLabel, ui.languageOptions[entry.targetLang as "ja" | "vi"]),
+        createHistoryRow(ui.modeLabel, ui.modeOptions[entry.mode as "daily" | "work" | "customer-service" | "hospital"]),
+        createHistoryRow(ui.toneLabel, ui.toneOptions[entry.tone as "casual" | "normal" | "polite"])
+      );
+
+      body.append(detailsGrid);
+      detailsElement.append(summaryEl, toolbar, body);
+      detailsElement.addEventListener("toggle", () => {
+        setHistoryDisclosureState(detailsElement);
+      });
       setHistoryDisclosureState(detailsElement);
-    });
-    setHistoryDisclosureState(detailsElement);
-    historyListElement.appendChild(detailsElement);
+      itemsContainer.appendChild(detailsElement);
+    }
+
+    dateGroup.append(summary, itemsContainer);
+    historyListElement.appendChild(dateGroup);
   }
 }
 

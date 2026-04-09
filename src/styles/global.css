@@ -185,7 +185,7 @@ html[data-theme="dark"] {
   }
 
   .panel-card {
-    @apply rounded-[var(--panel-radius)] border border-border/50 bg-card/22 backdrop-blur-xl;
+    @apply rounded-[var(--panel-radius)] border border-border/40 bg-card/10 backdrop-blur-xl;
     padding: var(--panel-padding);
   }
 
@@ -498,7 +498,7 @@ html[data-theme="dark"] {
     position: relative;
     border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
     border-radius: 1.15rem;
-    background: color-mix(in srgb, var(--card) 92%, transparent);
+    background: color-mix(in srgb, var(--card) 70%, transparent);
     overflow: clip;
     transition:
       border-color 0.18s ease,
@@ -507,11 +507,49 @@ html[data-theme="dark"] {
   }
 
   .history-list > .history-item:nth-child(odd) {
-    background: color-mix(in srgb, var(--card) 94%, var(--primary) 6%);
+    background: color-mix(in srgb, var(--card) 72%, var(--primary) 6%);
   }
 
   .history-list > .history-item:nth-child(even) {
-    background: color-mix(in srgb, var(--card) 94%, var(--accent) 6%);
+    background: color-mix(in srgb, var(--card) 72%, var(--accent) 6%);
+  }
+
+  .history-date-group {
+    border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+    border-radius: 1.2rem;
+    background: color-mix(in srgb, var(--card) 65%, transparent);
+    overflow: hidden;
+    margin-bottom: 0.6rem;
+  }
+
+  .history-date-group > summary {
+    cursor: pointer;
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    background: color-mix(in srgb, var(--card) 45%, transparent);
+    list-style: none;
+    user-select: none;
+  }
+
+  .history-date-group > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .history-date-group > summary::after {
+    content: "▾";
+    float: right;
+    transition: transform 0.2s ease;
+  }
+
+  .history-date-group:not([open]) > summary::after {
+    transform: rotate(-90deg);
+  }
+
+  .history-date-items {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.5rem;
   }
 
   .history-item[open] {
