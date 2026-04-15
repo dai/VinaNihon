@@ -191,4 +191,5 @@ function createProvider(runtimeEnv?: RuntimeEnv): TranslationProvider {
   return mockProvider;
 }
 
-export { TranslationProvider, mockProvider, createProvider, toProviderError };
+export type { TranslationProvider };
+export { mockProvider, createProvider, toProviderError };
