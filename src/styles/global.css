@@ -461,9 +461,8 @@ html[data-theme="dark"] {
   }
 
   .history-sticky-shell {
-    position: sticky;
-    top: 0;
-    z-index: 3;
+    position: relative;
+    z-index: 2;
     display: grid;
     gap: 0.55rem;
     margin-bottom: 0.9rem;
@@ -507,9 +506,49 @@ html[data-theme="dark"] {
     color: var(--muted-foreground);
   }
 
+  .history-scroll-area {
+    display: grid;
+    gap: 0.8rem;
+  }
+
   .history-list {
     display: grid;
     gap: 0.8rem;
+    align-content: start;
+  }
+
+  .history-pinned-section {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .history-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+  }
+
+  .history-section-heading {
+    margin: 0;
+  }
+
+  .history-section-count {
+    display: inline-flex;
+    min-width: 1.9rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.18rem 0.55rem;
+    background: color-mix(in srgb, var(--primary) 14%, transparent);
+    color: var(--primary);
+    font-size: var(--text-small);
+    font-weight: 600;
+  }
+
+  .history-pinned-list {
+    display: grid;
+    gap: 0.5rem;
   }
 
   .history-item {
@@ -524,12 +563,17 @@ html[data-theme="dark"] {
       background-color 0.18s ease;
   }
 
-  .history-list > .history-item:nth-child(odd) {
+  .history-item[data-historyParity="odd"] {
     background: color-mix(in srgb, var(--card) 72%, var(--primary) 6%);
   }
 
-  .history-list > .history-item:nth-child(even) {
+  .history-item[data-historyParity="even"] {
     background: color-mix(in srgb, var(--card) 72%, var(--accent) 6%);
+  }
+
+  .history-item.is-pinned {
+    border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
+    background: color-mix(in srgb, var(--card) 78%, var(--primary) 10%);
   }
 
   .history-date-group {
@@ -583,7 +627,7 @@ html[data-theme="dark"] {
     gap: 0.45rem;
     cursor: pointer;
     list-style: none;
-    padding: 0.95rem 4.5rem 0.95rem 0.95rem;
+    padding: 0.95rem 7.25rem 0.95rem 0.95rem;
     background: inherit;
   }
 
@@ -609,10 +653,30 @@ html[data-theme="dark"] {
     gap: 0.18rem;
   }
 
+  .history-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
   .history-meta {
     margin: 0;
     font-size: var(--text-small);
     color: var(--muted-foreground);
+  }
+
+  .history-pin-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.14rem 0.5rem;
+    background: color-mix(in srgb, var(--primary) 16%, transparent);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
 
   .history-preview,
@@ -631,8 +695,11 @@ html[data-theme="dark"] {
     right: 2.4rem;
     z-index: 2;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.35rem;
+    max-width: calc(100% - 7rem);
     opacity: 0;
     transform: translateY(-0.2rem);
     pointer-events: none;
@@ -699,7 +766,8 @@ html[data-theme="dark"] {
   }
 
   .copy-button.is-copied,
-  .voice-button.is-active {
+  .voice-button.is-active,
+  .icon-action-button.is-active {
     @apply border-primary bg-primary/10 text-primary;
   }
 
@@ -909,13 +977,14 @@ html[data-theme="dark"] {
       max-width: var(--page-max-width-wide);
       grid-template-columns: minmax(0, 1.65fr) minmax(20rem, 1fr);
       column-gap: calc(var(--page-gap) * 1.15);
-      align-items: end;
+      align-items: stretch;
+      min-height: calc(100dvh - (var(--page-padding-block) * 2));
     }
 
     .main-column {
-      min-height: max(var(--history-panel-height), clamp(24rem, 56vh, 44rem));
       display: flex;
       flex-direction: column;
+      min-height: 0;
     }
 
     .main-column > .translator-card,
@@ -934,20 +1003,25 @@ html[data-theme="dark"] {
     }
 
     .history-column {
-      display: grid;
-      align-content: end;
-      position: sticky;
-      top: max(
-        var(--page-padding-block),
-        calc(100dvh - var(--history-panel-height) - var(--page-padding-block))
-      );
+      display: flex;
+      align-self: stretch;
+      min-height: 0;
     }
 
     .history-card {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
       height: 100%;
-      max-height: max(var(--history-panel-height), clamp(24rem, 56vh, 44rem));
+      min-height: 0;
+    }
+
+    .history-scroll-area {
+      flex: 1;
+      min-height: 0;
       overflow: auto;
       padding-right: calc(var(--panel-padding) - 0.1rem);
+      margin-right: calc((var(--panel-padding) - 0.1rem) * -1);
     }
   }
 }

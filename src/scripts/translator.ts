@@ -1,4 +1,9 @@
 import { getConfig } from "./translator-config";
+import {
+  applyHistoryLimit,
+  normalizeHistoryEntries,
+  toggleHistoryPinned as toggleStoredHistoryPinned
+} from "./history-store.js";
 
 declare global {
   interface SpeechRecognitionEvent extends Event {
@@ -61,6 +66,22 @@ const speechLanguageMap: Record<string, string> = {
   ja: "ja-JP",
   vi: "vi-VN"
 };
+
+type HistoryEntry = {
+  id: string;
+  sourceLang: string;
+  targetLang: string;
+  text: string;
+  mode: string;
+  tone: string;
+  mainTranslation: string;
+  createdAt: string;
+  pinned: boolean;
+};
+
+type StoredHistoryEntry = Omit<HistoryEntry, "pinned"> & {
+  pinned?: boolean;
+};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let activeRecognition: any = null;
 let activeListenButton: HTMLButtonElement | null = null;
@@ -78,16 +99,7 @@ let lastTranslationRequest: {
   tone: string;
 } | null = null;
 let lastMainTranslation = "";
-let historyList: Array<{
-  id: string;
-  sourceLang: string;
-  targetLang: string;
-  text: string;
-  mode: string;
-  tone: string;
-  mainTranslation: string;
-  createdAt: string;
-}> = [];
+let historyList: HistoryEntry[] = [];
 
 function getUi(locale = currentLocale) {
   return uiCopy[locale] || uiCopy[defaultLocale];
@@ -373,16 +385,7 @@ function setError(message: string) {
   }
 }
 
-function isHistoryEntry(value: unknown): value is {
-  id: string;
-  sourceLang: string;
-  targetLang: string;
-  text: string;
-  mode: string;
-  tone: string;
-  mainTranslation: string;
-  createdAt: string;
-} {
+function isHistoryEntry(value: unknown): value is StoredHistoryEntry {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -436,7 +439,7 @@ function getHistoryDateKey(createdAt: string) {
 function createHistoryEntry(
   payload: { sourceLang: string; targetLang: string; text: string; mode: string; tone: string },
   translateData: { mainTranslation?: string }
-) {
+): HistoryEntry {
   return {
     id: generateHistoryId(),
     sourceLang: payload.sourceLang,
@@ -445,11 +448,12 @@ function createHistoryEntry(
     mode: payload.mode,
     tone: payload.tone,
     mainTranslation: translateData.mainTranslation || "",
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    pinned: false
   };
 }
 
-function saveHistory(entries: typeof historyList) {
+function saveHistory(entries: HistoryEntry[]) {
   try {
     localStorage.setItem(storageKeys.history, JSON.stringify(entries));
     return true;
@@ -458,7 +462,7 @@ function saveHistory(entries: typeof historyList) {
   }
 }
 
-function loadHistory() {
+function loadHistory(): HistoryEntry[] {
   try {
     const raw = getStoredValue(storageKeys.history);
     if (!raw) {
@@ -470,7 +474,7 @@ function loadHistory() {
       return [];
     }
 
-    return parsed.filter(isHistoryEntry).slice(0, 20);
+    return normalizeHistoryEntries(parsed.filter(isHistoryEntry)) as HistoryEntry[];
   } catch {
     setError(getUi().errorHistoryLoadFailed);
     return [];
@@ -519,22 +523,145 @@ function setHistoryDisclosureState(detailsElement: HTMLDetailsElement) {
   summary.title = label;
 }
 
-function renderHistory(entries: typeof historyList) {
-  if (!historyListElement || !historyEmptyState) {
-    return;
-  }
-
-  historyListElement.innerHTML = "";
-  historyEmptyState.classList.toggle("is-hidden", entries.length > 0);
-
-  if (clearHistoryButton) {
-    clearHistoryButton.disabled = entries.length === 0;
-  }
-
+function createHistoryItemElement(entry: HistoryEntry, index: number) {
   const ui = getUi();
 
-  // Group entries by date
-  const dateGroups = new Map<string, typeof entries>();
+  const detailsElement = document.createElement("details");
+  detailsElement.className = "history-item";
+  detailsElement.dataset.historyId = entry.id;
+  detailsElement.dataset.historyParity = index % 2 === 0 ? "even" : "odd";
+  detailsElement.dataset.historyPinned = entry.pinned ? "true" : "false";
+  detailsElement.open = true;
+  detailsElement.classList.toggle("is-pinned", entry.pinned);
+
+  const summaryEl = document.createElement("summary");
+  summaryEl.className = "history-item-summary";
+
+  const summaryMeta = document.createElement("div");
+  summaryMeta.className = "history-item-summary-meta";
+
+  const metaRow = document.createElement("div");
+  metaRow.className = "history-meta-row";
+
+  const meta = document.createElement("p");
+  meta.className = "history-meta";
+  meta.textContent = `${ui.historyCreatedAtLabel}: ${formatHistoryTimestamp(entry.createdAt)}`;
+  metaRow.append(meta);
+
+  if (entry.pinned) {
+    const badge = document.createElement("span");
+    badge.className = "history-pin-badge";
+    badge.textContent = ui.historyPinnedBadge;
+    metaRow.append(badge);
+  }
+
+  const preview = document.createElement("p");
+  preview.className = "history-preview result-body";
+  preview.textContent = truncatePreview(entry.mainTranslation || entry.text);
+
+  summaryMeta.append(metaRow, preview);
+
+  const direction = document.createElement("p");
+  direction.className = "history-direction";
+  direction.textContent = `${ui.languageOptions[entry.sourceLang as "ja" | "vi"]} → ${ui.languageOptions[entry.targetLang as "ja" | "vi"]}`;
+
+  summaryEl.append(summaryMeta, direction);
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "history-item-toolbar";
+  toolbar.setAttribute("role", "toolbar");
+  toolbar.setAttribute("aria-label", ui.historyActionsHeading);
+
+  const pinButton = document.createElement("button");
+  pinButton.type = "button";
+  pinButton.className = "history-toolbar-button icon-action-button";
+  pinButton.dataset.historyAction = "toggle-pin";
+  pinButton.dataset.historyId = entry.id;
+  pinButton.textContent = "📌";
+  pinButton.classList.toggle("is-active", entry.pinned);
+  pinButton.setAttribute("aria-pressed", entry.pinned ? "true" : "false");
+  setButtonTooltip(pinButton, entry.pinned ? ui.tooltipHistoryUnpin : ui.tooltipHistoryPin);
+
+  const reuseButton = document.createElement("button");
+  reuseButton.type = "button";
+  reuseButton.className = "history-toolbar-button icon-action-button";
+  reuseButton.dataset.historyAction = "reuse";
+  reuseButton.dataset.historyId = entry.id;
+  reuseButton.textContent = "↩";
+  setButtonTooltip(reuseButton, ui.tooltipHistoryReuse);
+
+  const copyButton = document.createElement("button");
+  copyButton.type = "button";
+  copyButton.className = "copy-button history-toolbar-button icon-action-button";
+  copyButton.dataset.copyKind = "history";
+  copyButton.dataset.historyId = entry.id;
+  copyButton.dataset.defaultLabel = ui.copyLabel;
+  copyButton.dataset.copiedLabelKey = "copiedLabel";
+  copyButton.dataset.iconIdle = "⧉";
+  copyButton.dataset.iconCopied = "✓";
+  copyButton.dataset.tooltipIdleKey = "tooltipHistoryCopy";
+  copyButton.dataset.tooltipCopiedKey = "copiedLabel";
+  copyButton.textContent = "⧉";
+  setButtonTooltip(copyButton, ui.tooltipHistoryCopy);
+
+  const speakButton = document.createElement("button");
+  speakButton.type = "button";
+  speakButton.className = "voice-button history-toolbar-button icon-action-button";
+  speakButton.dataset.voiceAction = "speak";
+  speakButton.dataset.speakKind = "history";
+  speakButton.dataset.historyId = entry.id;
+  speakButton.dataset.defaultLabel = ui.speakLabel;
+  speakButton.dataset.iconIdle = "🔊";
+  speakButton.dataset.iconActive = "⏹";
+  speakButton.dataset.tooltipIdleKey = "tooltipHistorySpeak";
+  speakButton.dataset.tooltipActiveKey = "stopLabel";
+  speakButton.textContent = "🔊";
+  setButtonTooltip(speakButton, ui.tooltipHistorySpeak);
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "history-toolbar-button icon-action-button is-destructive";
+  deleteButton.dataset.historyAction = "delete";
+  deleteButton.dataset.historyId = entry.id;
+  deleteButton.textContent = "🗑";
+  setButtonTooltip(deleteButton, ui.tooltipHistoryDelete);
+
+  const lineButton = document.createElement("button");
+  lineButton.type = "button";
+  lineButton.className = "line-button history-toolbar-button";
+  lineButton.dataset.lineShare = "";
+  lineButton.dataset.copyKind = "history";
+  lineButton.dataset.historyId = entry.id;
+  lineButton.textContent = "LINE";
+  setButtonTooltip(lineButton, ui.tooltipLineShare);
+
+  toolbar.append(pinButton, reuseButton, copyButton, speakButton, lineButton, deleteButton);
+
+  const body = document.createElement("div");
+  body.className = "history-item-body";
+
+  const detailsGrid = document.createElement("dl");
+  detailsGrid.className = "history-grid";
+  detailsGrid.append(
+    createHistoryRow(ui.historySourceLabel, entry.text),
+    createHistoryRow(ui.historyTargetLabel, entry.mainTranslation),
+    createHistoryRow(ui.sourceLangLabel, ui.languageOptions[entry.sourceLang as "ja" | "vi"]),
+    createHistoryRow(ui.targetLangLabel, ui.languageOptions[entry.targetLang as "ja" | "vi"]),
+    createHistoryRow(ui.modeLabel, ui.modeOptions[entry.mode as "daily" | "work" | "customer-service" | "hospital"]),
+    createHistoryRow(ui.toneLabel, ui.toneOptions[entry.tone as "casual" | "normal" | "polite"])
+  );
+
+  body.append(detailsGrid);
+  detailsElement.append(summaryEl, toolbar, body);
+  detailsElement.addEventListener("toggle", () => {
+    setHistoryDisclosureState(detailsElement);
+  });
+  setHistoryDisclosureState(detailsElement);
+  return detailsElement;
+}
+
+function appendHistoryDateGroups(container: HTMLElement, entries: HistoryEntry[]) {
+  const dateGroups = new Map<string, HistoryEntry[]>();
   for (const entry of entries) {
     const dateKey = getHistoryDateKey(entry.createdAt);
     if (!dateGroups.has(dateKey)) {
@@ -555,134 +682,78 @@ function renderHistory(entries: typeof historyList) {
     itemsContainer.className = "history-date-items";
 
     for (const [index, entry] of dateEntries.entries()) {
-      const detailsElement = document.createElement("details");
-      detailsElement.className = "history-item";
-      detailsElement.dataset.historyId = entry.id;
-      detailsElement.dataset.historyParity = index % 2 === 0 ? "even" : "odd";
-      detailsElement.open = true;
-
-      const summaryEl = document.createElement("summary");
-      summaryEl.className = "history-item-summary";
-
-      const summaryMeta = document.createElement("div");
-      summaryMeta.className = "history-item-summary-meta";
-
-      const meta = document.createElement("p");
-      meta.className = "history-meta";
-      meta.textContent = `${ui.historyCreatedAtLabel}: ${formatHistoryTimestamp(entry.createdAt)}`;
-
-      const preview = document.createElement("p");
-      preview.className = "history-preview result-body";
-      preview.textContent = truncatePreview(entry.mainTranslation || entry.text);
-
-      summaryMeta.append(meta, preview);
-
-      const direction = document.createElement("p");
-      direction.className = "history-direction";
-      direction.textContent = `${ui.languageOptions[entry.sourceLang as "ja" | "vi"]} → ${ui.languageOptions[entry.targetLang as "ja" | "vi"]}`;
-
-      summaryEl.append(summaryMeta, direction);
-
-      const toolbar = document.createElement("div");
-      toolbar.className = "history-item-toolbar";
-      toolbar.setAttribute("role", "toolbar");
-      toolbar.setAttribute("aria-label", ui.historyActionsHeading);
-
-      const reuseButton = document.createElement("button");
-      reuseButton.type = "button";
-      reuseButton.className = "history-toolbar-button icon-action-button";
-      reuseButton.dataset.historyAction = "reuse";
-      reuseButton.dataset.historyId = entry.id;
-      reuseButton.textContent = "↩";
-      setButtonTooltip(reuseButton, ui.tooltipHistoryReuse);
-
-      const copyButton = document.createElement("button");
-      copyButton.type = "button";
-      copyButton.className = "copy-button history-toolbar-button icon-action-button";
-      copyButton.dataset.copyKind = "history";
-      copyButton.dataset.historyId = entry.id;
-      copyButton.dataset.defaultLabel = ui.copyLabel;
-      copyButton.dataset.copiedLabelKey = "copiedLabel";
-      copyButton.dataset.iconIdle = "⧉";
-      copyButton.dataset.iconCopied = "✓";
-      copyButton.dataset.tooltipIdleKey = "tooltipHistoryCopy";
-      copyButton.dataset.tooltipCopiedKey = "copiedLabel";
-      copyButton.textContent = "⧉";
-      setButtonTooltip(copyButton, ui.tooltipHistoryCopy);
-
-      const speakButton = document.createElement("button");
-      speakButton.type = "button";
-      speakButton.className = "voice-button history-toolbar-button icon-action-button";
-      speakButton.dataset.voiceAction = "speak";
-      speakButton.dataset.speakKind = "history";
-      speakButton.dataset.historyId = entry.id;
-      speakButton.dataset.defaultLabel = ui.speakLabel;
-      speakButton.dataset.iconIdle = "🔊";
-      speakButton.dataset.iconActive = "⏹";
-      speakButton.dataset.tooltipIdleKey = "tooltipHistorySpeak";
-      speakButton.dataset.tooltipActiveKey = "stopLabel";
-      speakButton.textContent = "🔊";
-      setButtonTooltip(speakButton, ui.tooltipHistorySpeak);
-
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "history-toolbar-button icon-action-button is-destructive";
-      deleteButton.dataset.historyAction = "delete";
-      deleteButton.dataset.historyId = entry.id;
-      deleteButton.textContent = "🗑";
-      setButtonTooltip(deleteButton, ui.tooltipHistoryDelete);
-
-      const lineButton = document.createElement("button");
-      lineButton.type = "button";
-      lineButton.className = "line-button history-toolbar-button";
-      lineButton.dataset.lineShare = "";
-      lineButton.dataset.copyKind = "history";
-      lineButton.dataset.historyId = entry.id;
-      lineButton.textContent = "LINE";
-      setButtonTooltip(lineButton, ui.tooltipLineShare);
-
-      toolbar.append(reuseButton, copyButton, speakButton, lineButton, deleteButton);
-
-      const body = document.createElement("div");
-      body.className = "history-item-body";
-
-      const detailsGrid = document.createElement("dl");
-      detailsGrid.className = "history-grid";
-      detailsGrid.append(
-        createHistoryRow(ui.historySourceLabel, entry.text),
-        createHistoryRow(ui.historyTargetLabel, entry.mainTranslation),
-        createHistoryRow(ui.sourceLangLabel, ui.languageOptions[entry.sourceLang as "ja" | "vi"]),
-        createHistoryRow(ui.targetLangLabel, ui.languageOptions[entry.targetLang as "ja" | "vi"]),
-        createHistoryRow(ui.modeLabel, ui.modeOptions[entry.mode as "daily" | "work" | "customer-service" | "hospital"]),
-        createHistoryRow(ui.toneLabel, ui.toneOptions[entry.tone as "casual" | "normal" | "polite"])
-      );
-
-      body.append(detailsGrid);
-      detailsElement.append(summaryEl, toolbar, body);
-      detailsElement.addEventListener("toggle", () => {
-        setHistoryDisclosureState(detailsElement);
-      });
-      setHistoryDisclosureState(detailsElement);
-      itemsContainer.appendChild(detailsElement);
+      itemsContainer.appendChild(createHistoryItemElement(entry, index));
     }
 
     dateGroup.append(summary, itemsContainer);
-    historyListElement.appendChild(dateGroup);
+    container.appendChild(dateGroup);
   }
 }
 
-function prependHistoryEntry(entry: typeof historyList[number]) {
-  const nextEntries = [entry, ...historyList].slice(0, 20);
+function renderHistory(entries: HistoryEntry[]) {
+  if (!historyListElement || !historyEmptyState) {
+    return;
+  }
 
+  historyListElement.innerHTML = "";
+  historyEmptyState.classList.toggle("is-hidden", entries.length > 0);
+
+  if (clearHistoryButton) {
+    clearHistoryButton.disabled = entries.length === 0;
+  }
+
+  const ui = getUi();
+
+  const pinnedEntries = entries.filter((entry) => entry.pinned);
+  const regularEntries = entries.filter((entry) => !entry.pinned);
+
+  if (pinnedEntries.length > 0) {
+    const pinnedSection = document.createElement("section");
+    pinnedSection.className = "history-pinned-section";
+
+    const pinnedHeader = document.createElement("div");
+    pinnedHeader.className = "history-section-header";
+
+    const pinnedHeading = document.createElement("h3");
+    pinnedHeading.className = "history-section-heading section-subheading";
+    pinnedHeading.textContent = ui.historyPinnedHeading;
+
+    const pinnedCount = document.createElement("span");
+    pinnedCount.className = "history-section-count";
+    pinnedCount.textContent = String(pinnedEntries.length);
+
+    const pinnedList = document.createElement("div");
+    pinnedList.className = "history-pinned-list";
+
+    for (const [index, entry] of pinnedEntries.entries()) {
+      pinnedList.appendChild(createHistoryItemElement(entry, index));
+    }
+
+    pinnedHeader.append(pinnedHeading, pinnedCount);
+    pinnedSection.append(pinnedHeader, pinnedList);
+    historyListElement.appendChild(pinnedSection);
+  }
+
+  if (regularEntries.length > 0) {
+    appendHistoryDateGroups(historyListElement, regularEntries);
+  }
+}
+
+function saveAndRenderHistory(nextEntries: HistoryEntry[]) {
   if (!saveHistory(nextEntries)) {
     setError(getUi().errorHistorySaveFailed);
-    return;
+    return false;
   }
 
   historyList = nextEntries;
   renderHistory(historyList);
   updateButtonLabels();
   setupVoiceControls();
+  return true;
+}
+
+function prependHistoryEntry(entry: HistoryEntry) {
+  saveAndRenderHistory(applyHistoryLimit([entry, ...historyList]) as HistoryEntry[]);
 }
 
 function deleteHistoryEntry(id: string) {
@@ -691,15 +762,15 @@ function deleteHistoryEntry(id: string) {
     return;
   }
 
-  if (!saveHistory(nextEntries)) {
-    setError(getUi().errorHistorySaveFailed);
+  saveAndRenderHistory(nextEntries);
+}
+
+function toggleHistoryPinned(id: string) {
+  if (!getHistoryEntry(id)) {
     return;
   }
 
-  historyList = nextEntries;
-  renderHistory(historyList);
-  updateButtonLabels();
-  setupVoiceControls();
+  saveAndRenderHistory(toggleStoredHistoryPinned(historyList, id) as HistoryEntry[]);
 }
 
 function clearHistory() {
@@ -707,15 +778,7 @@ function clearHistory() {
     return;
   }
 
-  if (!saveHistory([])) {
-    setError(getUi().errorHistorySaveFailed);
-    return;
-  }
-
-  historyList = [];
-  renderHistory(historyList);
-  updateButtonLabels();
-  setupVoiceControls();
+  saveAndRenderHistory([]);
 }
 
 function reuseHistoryEntry(id: string) {
@@ -1388,6 +1451,11 @@ if (historySection) {
 
     if (action === "reuse") {
       reuseHistoryEntry(id);
+      return;
+    }
+
+    if (action === "toggle-pin") {
+      toggleHistoryPinned(id);
       return;
     }
 

@@ -23,10 +23,11 @@ const ui = UI_COPY.ja;
       </button>
     </div>
   </div>
+  <div class="history-scroll-area">
+    <p id="historyEmptyState" class="history-empty result-body" data-i18n="historyEmpty">
+      {ui.historyEmpty}
+    </p>
 
-  <p id="historyEmptyState" class="history-empty result-body" data-i18n="historyEmpty">
-    {ui.historyEmpty}
-  </p>
-
-  <div id="historyList" class="history-list" aria-live="polite"></div>
+    <div id="historyList" class="history-list" aria-live="polite"></div>
+  </div>
 </section>
