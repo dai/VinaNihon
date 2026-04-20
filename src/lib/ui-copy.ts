@@ -56,6 +56,10 @@ export interface UiCopy {
   historyCopy: string;
   historySpeak: string;
   historyDelete: string;
+  historyPin: string;
+  historyUnpin: string;
+  historyPinnedHeading: string;
+  historyPinnedBadge: string;
   historyClearAll: string;
   historyActionsHeading: string;
   historyConfirmClearAll: string;
@@ -85,6 +89,8 @@ export interface UiCopy {
   tooltipHistoryCopy: string;
   tooltipHistoryDelete: string;
   tooltipHistorySpeak: string;
+  tooltipHistoryPin: string;
+  tooltipHistoryUnpin: string;
   themeToggleToDark: string;
   themeToggleToLight: string;
   themeToggleToDarkAria: string;
@@ -164,6 +170,10 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     historyCopy: "コピー",
     historySpeak: "読み上げ",
     historyDelete: "削除",
+    historyPin: "ピン留め",
+    historyUnpin: "ピン留め解除",
+    historyPinnedHeading: "ピン留め",
+    historyPinnedBadge: "Pinned",
     historyClearAll: "全件削除",
     historyActionsHeading: "履歴操作",
     historyConfirmClearAll: "履歴をすべて削除しますか？",
@@ -193,6 +203,8 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     tooltipHistoryCopy: "この履歴の主翻訳をコピーする",
     tooltipHistoryDelete: "この履歴を削除する",
     tooltipHistorySpeak: "この履歴の主翻訳を読み上げる",
+    tooltipHistoryPin: "この履歴をピン留めする",
+    tooltipHistoryUnpin: "この履歴のピン留めを解除する",
     themeToggleToDark: "ダークモード",
     themeToggleToLight: "ライトモード",
     themeToggleToDarkAria: "ダークモードに切り替える",
@@ -268,6 +280,10 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     historyCopy: "Sao chép",
     historySpeak: "Đọc",
     historyDelete: "Xóa",
+    historyPin: "Ghim",
+    historyUnpin: "Bỏ ghim",
+    historyPinnedHeading: "Đã ghim",
+    historyPinnedBadge: "Đã ghim",
     historyClearAll: "Xóa tất cả",
     historyActionsHeading: "Tác vụ lịch sử",
     historyConfirmClearAll: "Bạn có muốn xóa toàn bộ lịch sử không?",
@@ -297,6 +313,8 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     tooltipHistoryCopy: "Sao chép bản dịch chính của mục này",
     tooltipHistoryDelete: "Xóa mục lịch sử này",
     tooltipHistorySpeak: "Đọc bản dịch chính của mục này",
+    tooltipHistoryPin: "Ghim mục lịch sử này",
+    tooltipHistoryUnpin: "Bỏ ghim mục lịch sử này",
     themeToggleToDark: "Chế độ tối",
     themeToggleToLight: "Chế độ sáng",
     themeToggleToDarkAria: "Chuyển sang chế độ tối",

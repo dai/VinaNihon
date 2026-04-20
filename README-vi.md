@@ -7,8 +7,8 @@ Bạn có thể dịch trực tiếp ngay trên trang chủ, đồng thời xem 
 
 Trong ô nhập liệu, các nút nhập giọng nói và đọc văn bản được nhúng ngay ở góc phải phía dưới của textarea, hiển thị bằng icon kèm tooltip.
 Mỗi phần trong kết quả dịch cũng dùng nút icon + tooltip cho thao tác đọc và sao chép.
-Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 20 mục gần nhất.
-Khung lịch sử dùng accordion với header sticky, cho phép mở từng mục rồi dùng lại, sao chép, xóa hoặc đọc bản dịch chính.
+Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 100 mục gần nhất.
+Khung lịch sử có chiều cao khớp với khung chính trên desktop, dùng accordion với header sticky và cho phép ghim, dùng lại, sao chép, xóa hoặc đọc bản dịch chính.
 Ngôn ngữ giao diện có thể chuyển bằng nút chuyển đổi ở góc trên bên phải của khung chính (日本語｜ベトナム語), và được lưu trong SESSION KV theo phiên người dùng.
 
 <img src="112.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với ngôn ngữ giao diện tiếng Nhật, nút chuyển đổi ngôn ngữ ở góc trên bên phải, các điều khiển dịch, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch"> <img src="113.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối với ngôn ngữ giao diện tiếng Việt có dấu, nút chuyển đổi ngôn ngữ và các mục lịch sử được hiển thị bằng tiếng Việt">
@@ -114,8 +114,9 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 
 - Lịch sử được lưu trong `localStorage` của từng trình duyệt
 - Dữ liệu lưu gồm văn bản gốc, bản dịch chính, hướng dịch, chế độ, sắc thái và thời gian tạo
-- Giữ tối đa 20 mục mới nhất; mỗi mục hiển thị như một accordion có phần thời gian riêng
+- Giữ tối đa 100 mục mới nhất; các mục đã ghim được gom vào một phần riêng ở đầu danh sách
 - Header lịch sử và nút xóa toàn bộ luôn còn hiển thị khi cuộn
+- Mỗi mục lịch sử có thể ghim / bỏ ghim, điền lại, sao chép bản dịch chính, đọc và xóa riêng
 - Từng mục hỗ trợ dùng lại, sao chép bản dịch chính, đọc bản dịch chính và xóa riêng
 - Các dòng lịch sử được tô xen kẽ để dễ phân biệt hơn khi xem nhanh
 - Thông tin bổ sung như cách diễn đạt khác, ghi chú sắc thái và gợi ý phản hồi không được lưu trong lịch sử; nếu cần sẽ tải lại sau

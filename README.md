@@ -7,8 +7,8 @@
 
 入力欄では textarea 右下に音声入力・読み上げボタンを埋め込み、アイコンとツールチップで操作できます。
 翻訳結果の各セクションも、読み上げ・コピーをアイコンボタン + ツールチップで利用できます。
-翻訳履歴はブラウザの `localStorage` に最新 20 件まで保存されます。
-履歴ペインは sticky ヘッダー付きの accordion で、各項目を展開しつつ再入力・コピー・削除・読み上げを行えます。
+翻訳履歴はブラウザの `localStorage` に最新 100 件まで保存されます。
+履歴ペインはメインペインと高さを揃えた sticky ヘッダー付きの accordion で、各項目のピン留め・再入力・コピー・削除・読み上げを行えます。
 UI言語はメインペイン右上のトグルボタン（日本語｜ベトナム語）で切り替えられ、Cookie単位で SESSION KV に保存されます。
 
 <img src="114.jpg" width="300" alt="VinaNihon translation interface in light mode with Japanese UI locale active, showing the UI language toggle button in the top-right corner, translation controls, voice input and playback buttons, and translation history"> <img src="115.jpg" width="300" alt="VinaNihon translation interface in dark mode with Vietnamese UI locale active, showing the same controls with the language toggle switched to Vietnamese and history items localized accordingly">
@@ -114,9 +114,9 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 
 - 履歴は各ブラウザの `localStorage` に保存されます
 - 保存対象は原文、主翻訳、言語方向、モード、トーン、作成日時です
-- 最新 20 件まで保持し、各履歴は日時付き accordion として折りたためます
+- 最新 100 件まで保持し、ピン留めした履歴は先頭のセクションに分けて表示されます
 - 履歴ヘッダーと全件削除ボタンはスクロール中も表示されたままです
-- 各履歴から再入力、主翻訳のコピー、主翻訳の読み上げ、個別削除ができます
+- 各履歴からピン留め / ピン留め解除、再入力、主翻訳のコピー、主翻訳の読み上げ、個別削除ができます
 - 履歴行は視認性向上のために交互に色分けされています
 - 補足情報（言い換え候補、ニュアンスメモ、返信例）は履歴には保存されず、再表示時に必要なら再取得します
 
