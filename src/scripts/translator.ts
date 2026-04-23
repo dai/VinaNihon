@@ -54,6 +54,9 @@ const historySection = document.getElementById("translationHistory") as HTMLElem
 const historyListElement = document.getElementById("historyList") as HTMLElement | null;
 const historyEmptyState = document.getElementById("historyEmptyState") as HTMLElement | null;
 const clearHistoryButton = document.getElementById("clearHistoryButton") as HTMLButtonElement | null;
+const historySearchToggle = document.getElementById("historySearchToggle") as HTMLButtonElement | null;
+const historySearchPopover = document.getElementById("historySearchPopover") as HTMLElement | null;
+const historySearchInput = document.getElementById("historySearchInput") as HTMLInputElement | null;
 const copyTimers = new WeakMap<HTMLButtonElement, ReturnType<typeof setTimeout>>();
 const i18nNodes = Array.from(document.querySelectorAll("[data-i18n]"));
 const placeholderNodes = Array.from(document.querySelectorAll("[data-i18n-placeholder]"));
@@ -100,6 +103,8 @@ let lastTranslationRequest: {
 } | null = null;
 let lastMainTranslation = "";
 let historyList: HistoryEntry[] = [];
+let historySearchOpen = false;
+let historySearchQuery = "";
 
 function getUi(locale = currentLocale) {
   return uiCopy[locale] || uiCopy[defaultLocale];
@@ -352,6 +357,7 @@ function applyLocale(locale: string, persist = true) {
   updateLocaleToggle();
   renderHistory(historyList);
   updateButtonLabels();
+  updateHistorySearchUi();
 
   if (persist) {
     fetch("/api/session-locale", {
@@ -521,6 +527,81 @@ function setHistoryDisclosureState(detailsElement: HTMLDetailsElement) {
 
   summary.setAttribute("aria-label", label);
   summary.title = label;
+}
+
+function getHistorySearchQuery() {
+  return historySearchQuery.trim().toLowerCase();
+}
+
+function filterHistoryEntries(entries: HistoryEntry[]) {
+  const normalizedQuery = getHistorySearchQuery();
+  if (!normalizedQuery) {
+    return entries;
+  }
+
+  return entries.filter((entry) => {
+    const sourceText = entry.text.trim().toLowerCase();
+    const mainText = entry.mainTranslation.trim().toLowerCase();
+    return sourceText.includes(normalizedQuery) || mainText.includes(normalizedQuery);
+  });
+}
+
+function updateHistorySearchUi(focusInput = false) {
+  const ui = getUi();
+
+  if (historySearchToggle) {
+    const toggleLabel = historySearchOpen ? ui.historySearchCloseAria : ui.historySearchOpenAria;
+    historySearchToggle.setAttribute("aria-expanded", historySearchOpen ? "true" : "false");
+    setButtonTooltip(historySearchToggle, toggleLabel);
+  }
+
+  if (historySearchPopover) {
+    historySearchPopover.hidden = !historySearchOpen;
+    historySearchPopover.classList.toggle("is-hidden", !historySearchOpen);
+    historySearchPopover.classList.toggle("is-open", historySearchOpen);
+  }
+
+  if (historySearchInput) {
+    historySearchInput.value = historySearchQuery;
+    if (historySearchOpen && focusInput) {
+      requestAnimationFrame(() => {
+        historySearchInput.focus();
+        historySearchInput.select();
+      });
+    }
+  }
+}
+
+function rerenderHistory() {
+  renderHistory(historyList);
+  updateButtonLabels();
+  setupVoiceControls();
+}
+
+function openHistorySearch() {
+  historySearchOpen = true;
+  updateHistorySearchUi(true);
+}
+
+function closeHistorySearch(clearQuery = true, focusToggle = false) {
+  historySearchOpen = false;
+  if (clearQuery) {
+    historySearchQuery = "";
+  }
+  updateHistorySearchUi();
+  rerenderHistory();
+
+  if (focusToggle && historySearchToggle) {
+    historySearchToggle.focus();
+  }
+}
+
+function toggleHistorySearch() {
+  if (historySearchOpen) {
+    closeHistorySearch(true);
+    return;
+  }
+  openHistorySearch();
 }
 
 function createHistoryItemElement(entry: HistoryEntry, index: number) {
@@ -695,17 +776,26 @@ function renderHistory(entries: HistoryEntry[]) {
     return;
   }
 
+  const visibleEntries = filterHistoryEntries(entries);
+  const hasSearchQuery = getHistorySearchQuery().length > 0;
+  const emptyMessage = hasSearchQuery ? getUi().historySearchNoResults : getUi().historyEmpty;
+
   historyListElement.innerHTML = "";
-  historyEmptyState.classList.toggle("is-hidden", entries.length > 0);
+  historyEmptyState.textContent = emptyMessage;
+  historyEmptyState.classList.toggle("is-hidden", visibleEntries.length > 0);
 
   if (clearHistoryButton) {
     clearHistoryButton.disabled = entries.length === 0;
   }
 
+  if (visibleEntries.length === 0) {
+    return;
+  }
+
   const ui = getUi();
 
-  const pinnedEntries = entries.filter((entry) => entry.pinned);
-  const regularEntries = entries.filter((entry) => !entry.pinned);
+  const pinnedEntries = visibleEntries.filter((entry) => entry.pinned);
+  const regularEntries = visibleEntries.filter((entry) => !entry.pinned);
 
   if (pinnedEntries.length > 0) {
     const pinnedSection = document.createElement("section");
@@ -746,9 +836,7 @@ function saveAndRenderHistory(nextEntries: HistoryEntry[]) {
   }
 
   historyList = nextEntries;
-  renderHistory(historyList);
-  updateButtonLabels();
-  setupVoiceControls();
+  rerenderHistory();
   return true;
 }
 
@@ -778,6 +866,9 @@ function clearHistory() {
     return;
   }
 
+  historySearchOpen = false;
+  historySearchQuery = "";
+  updateHistorySearchUi();
   saveAndRenderHistory([]);
 }
 
@@ -1411,12 +1502,28 @@ document.addEventListener("click", (event) => {
     handleLineButton(lineButton);
     return;
   }
+
+  if (historySearchOpen && historySection && !historySection.contains(target)) {
+    closeHistorySearch(true);
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !historySearchOpen) {
+    return;
+  }
+  closeHistorySearch(true, true);
 });
 
 if (historySection) {
   historySection.addEventListener("click", async (event) => {
     const target = event.target;
     if (!(target instanceof Element)) {
+      return;
+    }
+
+    if (target.closest("#historySearchToggle")) {
+      toggleHistorySearch();
       return;
     }
 
@@ -1464,6 +1571,11 @@ if (historySection) {
     }
   });
 }
+
+historySearchInput?.addEventListener("input", () => {
+  historySearchQuery = historySearchInput.value;
+  rerenderHistory();
+});
 
 form?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1522,6 +1634,7 @@ form?.addEventListener("submit", async (event) => {
 restorePreferences();
 historyList = loadHistory();
 renderHistory(historyList);
+updateHistorySearchUi();
 resetDetailsState();
 refreshSpeechVoices();
 if (speechSynthesisApi) {

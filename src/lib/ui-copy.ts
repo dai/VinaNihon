@@ -68,6 +68,11 @@ export interface UiCopy {
   historySourceLabel: string;
   historyTargetLabel: string;
   historyCreatedAtLabel: string;
+  historySearchOpenAria: string;
+  historySearchCloseAria: string;
+  historySearchInputPlaceholder: string;
+  historySearchInputAria: string;
+  historySearchNoResults: string;
   emptyList: string;
   copyLabel: string;
   copiedLabel: string;
@@ -85,12 +90,12 @@ export interface UiCopy {
   tooltipRepliesSpeak: string;
   tooltipRepliesCopy: string;
   tooltipLineShare: string;
+  tooltipHistoryPin: string;
+  tooltipHistoryUnpin: string;
   tooltipHistoryReuse: string;
   tooltipHistoryCopy: string;
   tooltipHistoryDelete: string;
   tooltipHistorySpeak: string;
-  tooltipHistoryPin: string;
-  tooltipHistoryUnpin: string;
   themeToggleToDark: string;
   themeToggleToLight: string;
   themeToggleToDarkAria: string;
@@ -182,6 +187,11 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     historySourceLabel: "原文",
     historyTargetLabel: "主翻訳",
     historyCreatedAtLabel: "日時",
+    historySearchOpenAria: "履歴検索を開く",
+    historySearchCloseAria: "履歴検索を閉じる",
+    historySearchInputPlaceholder: "履歴を検索（原文・主翻訳）",
+    historySearchInputAria: "履歴検索入力",
+    historySearchNoResults: "検索条件に一致する履歴はありません。",
     emptyList: "なし",
     copyLabel: "コピー",
     copiedLabel: "コピー済み",
@@ -199,12 +209,12 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     tooltipRepliesSpeak: "返信例を読み上げる",
     tooltipRepliesCopy: "返信例をコピーする",
     tooltipLineShare: "LINEに送る",
+    tooltipHistoryPin: "この履歴をピン留めする",
+    tooltipHistoryUnpin: "この履歴のピン留めを解除する",
     tooltipHistoryReuse: "この履歴を再入力する",
     tooltipHistoryCopy: "この履歴の主翻訳をコピーする",
     tooltipHistoryDelete: "この履歴を削除する",
     tooltipHistorySpeak: "この履歴の主翻訳を読み上げる",
-    tooltipHistoryPin: "この履歴をピン留めする",
-    tooltipHistoryUnpin: "この履歴のピン留めを解除する",
     themeToggleToDark: "ダークモード",
     themeToggleToLight: "ライトモード",
     themeToggleToDarkAria: "ダークモードに切り替える",
@@ -292,6 +302,11 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     historySourceLabel: "Văn bản gốc",
     historyTargetLabel: "Bản dịch chính",
     historyCreatedAtLabel: "Thời gian",
+    historySearchOpenAria: "Mở tìm kiếm lịch sử",
+    historySearchCloseAria: "Đóng tìm kiếm lịch sử",
+    historySearchInputPlaceholder: "Tìm trong lịch sử (gốc + bản dịch chính)",
+    historySearchInputAria: "Ô nhập tìm kiếm lịch sử",
+    historySearchNoResults: "Không có mục lịch sử phù hợp.",
     emptyList: "Không có",
     copyLabel: "Sao chép",
     copiedLabel: "Đã sao chép",
@@ -309,12 +324,12 @@ export const UI_COPY: Record<UiLocale, UiCopy> = {
     tooltipRepliesSpeak: "Đọc gợi ý phản hồi",
     tooltipRepliesCopy: "Sao chép gợi ý phản hồi",
     tooltipLineShare: "Gửi qua LINE",
+    tooltipHistoryPin: "Ghim mục lịch sử này",
+    tooltipHistoryUnpin: "Bỏ ghim mục lịch sử này",
     tooltipHistoryReuse: "Điền lại mục lịch sử này",
     tooltipHistoryCopy: "Sao chép bản dịch chính của mục này",
     tooltipHistoryDelete: "Xóa mục lịch sử này",
     tooltipHistorySpeak: "Đọc bản dịch chính của mục này",
-    tooltipHistoryPin: "Ghim mục lịch sử này",
-    tooltipHistoryUnpin: "Bỏ ghim mục lịch sử này",
     themeToggleToDark: "Chế độ tối",
     themeToggleToLight: "Chế độ sáng",
     themeToggleToDarkAria: "Chuyển sang chế độ tối",
