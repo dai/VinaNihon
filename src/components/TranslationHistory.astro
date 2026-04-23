@@ -8,45 +8,47 @@ const ui = UI_COPY.ja;
   <div class="history-sticky-shell">
     <div class="history-header">
       <h2 class="section-heading" data-i18n="historyHeading">{ui.historyHeading}</h2>
-      <div class="history-search-shell">
-        <button
-          type="button"
-          id="historySearchToggle"
-          class="icon-action-button history-search-toggle"
-          aria-controls="historySearchPopover"
-          aria-expanded="false"
-          data-i18n-aria-label="historySearchOpenAria"
-          title={ui.historySearchOpenAria}
-        >
-          🔍
-        </button>
-        <div id="historySearchPopover" class="history-search-popover is-hidden" hidden>
-          <input
-            id="historySearchInput"
-            class="form-control history-search-input"
-            type="search"
-            data-i18n-placeholder="historySearchInputPlaceholder"
-            data-i18n-aria-label="historySearchInputAria"
-            placeholder={ui.historySearchInputPlaceholder}
-            aria-label={ui.historySearchInputAria}
-            autocomplete="off"
-            spellcheck="false"
-          />
-        </div>
-      </div>
     </div>
     <div class="history-clear-row">
       <p class="history-clear-heading section-subheading" data-i18n="historyActionsHeading">
         {ui.historyActionsHeading}
       </p>
-      <button
-        type="button"
-        id="clearHistoryButton"
-        class="action-button"
-        data-i18n="historyClearAll"
-      >
-        {ui.historyClearAll}
-      </button>
+      <div class="history-clear-actions">
+        <div class="history-search-shell">
+          <button
+            type="button"
+            id="historySearchToggle"
+            class="icon-action-button history-search-toggle"
+            aria-controls="historySearchPopover"
+            aria-expanded="false"
+            data-i18n-aria-label="historySearchOpenAria"
+            title={ui.historySearchOpenAria}
+          >
+            🔍
+          </button>
+          <div id="historySearchPopover" class="history-search-popover is-hidden" hidden>
+            <input
+              id="historySearchInput"
+              class="form-control history-search-input"
+              type="search"
+              data-i18n-placeholder="historySearchInputPlaceholder"
+              data-i18n-aria-label="historySearchInputAria"
+              placeholder={ui.historySearchInputPlaceholder}
+              aria-label={ui.historySearchInputAria}
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          id="clearHistoryButton"
+          class="action-button"
+          data-i18n="historyClearAll"
+        >
+          {ui.historyClearAll}
+        </button>
+      </div>
     </div>
   </div>
   <div class="history-scroll-area">
