@@ -8,7 +8,7 @@ Bạn có thể dịch trực tiếp ngay trên trang chủ, đồng thời xem 
 Trong ô nhập liệu, các nút nhập giọng nói và đọc văn bản được nhúng ngay ở góc phải phía dưới của textarea, hiển thị bằng icon kèm tooltip.
 Mỗi phần trong kết quả dịch cũng dùng nút icon + tooltip cho thao tác đọc và sao chép.
 Lịch sử dịch được lưu trong `localStorage` của trình duyệt với tối đa 100 mục gần nhất.
-Trên desktop, khung lịch sử bám theo phía trên trang và cuộn độc lập trong chính khung. Đây là accordion có header sticky, mở tìm kiếm nổi bằng nút kính lúp, và cho phép ghim, dùng lại, sao chép, xóa hoặc đọc bản dịch chính.
+Trên desktop, khung lịch sử bám theo phía trên trang, keeps the same height as the main pane, và cuộn độc lập trong chính khung. Đây là accordion có header sticky, mở tìm kiếm nổi bằng nút kính lúp, và cho phép ghim, dùng lại, sao chép, xóa hoặc đọc bản dịch chính.
 Ngôn ngữ giao diện có thể chuyển bằng nút chuyển đổi ở góc trên bên phải của khung chính (日本語｜ベトナム語), và được lưu trong SESSION KV theo phiên người dùng.
 
 <img src="112.jpg" width="300" alt="Giao diện VinaNihon ở chế độ sáng với ngôn ngữ giao diện tiếng Nhật, nút chuyển đổi ngôn ngữ ở góc trên bên phải, các điều khiển dịch, nút nhập giọng nói và phát âm thanh, cùng phần lịch sử dịch"> <img src="113.jpg" width="300" alt="Giao diện VinaNihon ở chế độ tối với ngôn ngữ giao diện tiếng Việt có dấu, nút chuyển đổi ngôn ngữ và các mục lịch sử được hiển thị bằng tiếng Việt">
@@ -17,7 +17,7 @@ Ngôn ngữ giao diện có thể chuyển bằng nút chuyển đổi ở góc 
 
 - Astro + TypeScript
 - Cloudflare Pages (`@astrojs/cloudflare`)
-- Astro API routes (`/api/translate`, `/api/reply`)
+- Astro API routes (`/api/translate`, `/api/translate-details`, `/api/reply`)
 - Provider abstraction (`mock` / `openai`)
 
 ## Thiết lập cục bộ (Astro dev)
@@ -49,7 +49,7 @@ Nếu muốn dùng API tương thích OpenAI nhưng vẫn giữ `openai` provide
 ```dotenv
 TRANSLATION_PROVIDER=openai
 OPENAI_API_KEY=your_compatible_api_key
-OPENAI_MODEL=MiniMax-M2.5
+OPENAI_MODEL=MiniMax-M3
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
 
@@ -106,7 +106,7 @@ Nếu muốn dùng MiniMax với `openai` provider, dùng cấu hình sau:
 ```dotenv
 TRANSLATION_PROVIDER=openai
 OPENAI_API_KEY=your_minimax_api_key
-OPENAI_MODEL=MiniMax-M2.7
+OPENAI_MODEL=MiniMax-M3
 OPENAI_BASE_URL=https://api.minimax.io/v1
 ```
 
@@ -115,8 +115,9 @@ OPENAI_BASE_URL=https://api.minimax.io/v1
 - Lịch sử được lưu trong `localStorage` của từng trình duyệt
 - Dữ liệu lưu gồm văn bản gốc, bản dịch chính, hướng dịch, chế độ, sắc thái và thời gian tạo
 - Giữ tối đa 100 mục mới nhất; các mục đã ghim được gom vào một phần riêng ở đầu danh sách
-- Trên desktop, khung lịch sử bám phía trên và cuộn độc lập trong chính khung (không ép cùng chiều cao với khung chính)
+- Trên desktop, khung lịch sử bám phía trên, keeps the same height as the main pane, và cuộn độc lập trong chính khung
 - Header lịch sử và nút xóa toàn bộ luôn còn hiển thị khi cuộn
+- Các nhóm theo ngày có thể thu gọn, và phần tóm tắt thời gian của từng mục vẫn sticky khi cuộn
 - Nút kính lúp ở header mở ô tìm kiếm nổi
 - Tìm kiếm khớp một phần, không phân biệt chữ hoa thường, trên văn bản gốc + bản dịch chính và lọc ngay khi nhập
 - Khi không có kết quả tìm kiếm sẽ hiện thông báo riêng, khác với trạng thái chưa có lịch sử
@@ -144,7 +145,7 @@ Ví dụ khi dùng MiniMax:
 
 - `TRANSLATION_PROVIDER=openai`
 - `OPENAI_API_KEY=your_minimax_api_key`
-- `OPENAI_MODEL=MiniMax-M2.7`
+- `OPENAI_MODEL=MiniMax-M3`
 - `OPENAI_BASE_URL=https://api.minimax.io/v1`
 
 Đối với runtime trên Cloudflare Pages, hãy đặt cùng các biến đó trong phần cài đặt của dự án Pages.
@@ -204,6 +205,7 @@ Ví dụ:
 - `TRANSLATION_PROVIDER=mock`
 - `TRANSLATION_PROVIDER=openai` cùng với `OPENAI_API_KEY`
 - `TRANSLATION_PROVIDER=openai` cùng với `OPENAI_BASE_URL=https://api.minimax.io/v1`
+- `TRANSLATION_PROVIDER=openai` cùng với `OPENAI_MODEL=MiniMax-M3`
 
 ### 4. Gắn KV namespace vào Pages
 
@@ -298,9 +300,9 @@ Response:
 - `openai` provider: gọi `POST https://api.openai.com/v1/responses`
   Nếu đổi `OPENAI_BASE_URL` sang một endpoint tương thích OpenAI, hệ thống sẽ tự chọn `responses` hoặc `chat/completions` tùy backend đó.
 
-Contract của API routes không thay đổi. `/api/translate` và `/api/reply` vẫn chỉ đóng vai trò mỏng và ủy quyền cho service layer.
+Các API route đều mỏng và ủy quyền cho service layer. Bản dịch chính dùng `/api/translate`, thông tin bổ sung dùng `/api/translate-details`, và lấy riêng ví dụ trả lời dùng `/api/reply`.
 
-Trang chủ dùng một request `/api/translate`, nên bản dịch và các câu trả lời gợi ý được tạo trong một lần gọi provider. `/api/reply` vẫn được giữ lại như endpoint riêng để tương thích ngược.
+Trang chủ trước tiên gọi `/api/translate` để lấy bản dịch chính, sau đó khi người dùng yêu cầu sẽ gọi thêm `/api/translate-details` để hiển thị các cách diễn đạt khác, ghi chú sắc thái và ví dụ trả lời. `/api/reply` vẫn được giữ lại như endpoint độc lập.
 
 Đối với Cloudflare Pages CI, script build sẽ xóa các file sinh ra như `_worker.js/wrangler.json`, `_worker.js/.dev.vars` và `.wrangler/deploy/config.json` sau khi `astro build`. Script cũng sao chép `_worker.js/entry.mjs` sang `_worker.js/index.js` vì trình upload Pages hiện tại yêu cầu tên file đó khi deploy.
 
@@ -333,6 +335,19 @@ curl -s -X POST http://localhost:4321/api/reply \
   }'
 ```
 
+```bash
+curl -s -X POST http://localhost:4321/api/translate-details \
+  -H "content-type: application/json" \
+  -d '{
+    "sourceLang":"ja",
+    "targetLang":"vi",
+    "originalText":"こんにちは",
+    "mainTranslation":"Xin chào",
+    "mode":"daily",
+    "tone":"normal"
+  }'
+```
+
 ## Khắc phục sự cố
 
 - Nút nhập giọng nói bị vô hiệu hóa
@@ -342,7 +357,7 @@ curl -s -X POST http://localhost:4321/api/reply \
 - `OPENAI_API_KEY is required when TRANSLATION_PROVIDER=openai.`
   - Hãy kiểm tra xem `.env` đã có `OPENAI_API_KEY` hay chưa.
 - Muốn dùng MiniMax bằng `openai` provider
-  - Hãy đặt `OPENAI_BASE_URL=https://api.minimax.io/v1` và `OPENAI_MODEL=MiniMax-M2.7`.
+  - Hãy đặt `OPENAI_BASE_URL=https://api.minimax.io/v1` và `OPENAI_MODEL=MiniMax-M3`.
 - Lịch sử khác nhau giữa các trình duyệt
   - Lịch sử hiện được lưu bằng `localStorage`, nên không tự đồng bộ giữa các trình duyệt hoặc cửa sổ ẩn danh.
 - Xuất hiện lỗi phía OpenAI liên quan đến `json_object`
