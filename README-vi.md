@@ -25,6 +25,7 @@ Ngôn ngữ giao diện có thể chuyển bằng nút chuyển đổi ở góc 
 1. Cài dependencies:
 
 ```bash
+nvm use 22
 npm install
 ```
 
@@ -85,6 +86,8 @@ Nếu PowerShell gặp lỗi với wrapper `npm`, hãy dùng `npm.cmd` như sau.
 npm.cmd run build
 npm.cmd run preview
 ```
+
+Node.js: `22`
 
 ## Bắt đầu nhanh
 
